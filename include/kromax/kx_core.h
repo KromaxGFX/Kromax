@@ -1,9 +1,8 @@
 #ifndef KX_CORE_H
- * callbacks, opaque handles, object creation/info structs, and every
+ /* callbacks, opaque handles, object creation/info structs, and every */
 #define KX_CORE_H
- * core kx* function. Functions that are declared but not yet implemented
- * return KX_ERROR_FEATURE_NOT_PRESENT.
- */
+ /* core kx* function. Functions that are declared but not yet implemented */
+ /* return KX_ERROR_FEATURE_NOT_PRESENT. */
 
 #include "kx_platform.h"
 

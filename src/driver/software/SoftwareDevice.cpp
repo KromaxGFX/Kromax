@@ -52,6 +52,7 @@ SoftwareCommandBuffer* SoftwareDevice::find_command_buffer(
 
 KxDeviceMemory SoftwareDevice::register_memory(
     std::unique_ptr<SoftwareMemory> mem) {
+    using std::unique_ptr;
     auto* raw = mem.get();
     memories_.push_back(std::move(mem));
     return reinterpret_cast<KxDeviceMemory>(raw);
