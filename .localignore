@@ -43,3 +43,15 @@ third_party/*_large*
 # This file should be added to .gitignore if you want to track its existence
 EOF
 .localignore creado"
+# Personal rules and notes (moved from .local/)
+## No emojis in commits:
+- Messages de commit
+- Comentarios de código (.c, .h, .cpp)
+- Documentación (README, docs/)
+- Cualquier archivo que se comprometa
+
+## Solo en archivos personales:
+- .localignore itself
+- agents.md personal
+- Notas de desarrollo temporales
+
