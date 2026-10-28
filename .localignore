@@ -1,0 +1,45 @@
+# Kromax .localignore
+# THIS FILE IS NOT TRACKED BY GIT
+# It is for local developer only - contains paths ignored on this machine
+# Add any build artifacts, test outputs, or personal config files here
+
+# Build/preset specific outputs
+build/debug/
+build/ci/
+build/release/
+build/asan-ubsan/
+
+# Test binaries (if built outside CI)
+bin/*_test
+bin/kromax_test
+
+# Personal test results
+tests/results/
+tests/.passed
+tests/.failed
+
+# Local config not for repo
+.local/
+.config/kromax.local
+
+# Downloaded/third-party not in repo
+third_party/downloads/
+third_party/*_large*
+
+# IDE specific local state
+.vscode/settings.local
+.idea/local/
+
+# Cache files
+*.cache
+.cache/
+
+# PyDev / Python specific
+.pydevproject
+.venv/
+.env
+
+# Note: Add any path that is generated locally and should not be shared
+# This file should be added to .gitignore if you want to track its existence
+EOF
+.localignore creado"
