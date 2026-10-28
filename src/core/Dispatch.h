@@ -1,0 +1,97 @@
+#ifndef KROMAX_SRC_CORE_DISPATCH_H
+#define KROMAX_SRC_CORE_DISPATCH_H
+
+/*
+ * Dispatch.h
+ *
+ * Dispatch-table infrastructure. Each internal object type carries a
+ * pointer to a table of virtual function pointers; the public C API layer
+ * looks up the table from the handle and invokes the entry, which keeps
+ * the ABI stable and allows layers (validation, etc.) to decorate calls.
+ */
+
+#include <cstdint>
+
+#include "kx_core.h"
+
+namespace kx {
+
+/* Forward declarations of internal object types */
+class Instance;
+class PhysicalDevice;
+class Device;
+class Queue;
+class DeviceMemory;
+class Buffer;
+class Image;
+class ImageView;
+class ShaderModule;
+class PipelineLayout;
+class Pipeline;
+class CommandPool;
+class CommandBuffer;
+class Fence;
+class Semaphore;
+
+/* -----------------------------------------------------------------------
+ * Instance dispatch table
+ * --------------------------------------------------------------------- */
+struct InstanceDispatch {
+    KxResult (KX_CALL* create_device)(
+        KxPhysicalDevice, const KxDeviceCreateInfo*,
+        const KxAllocationCallbacks*, KxDevice*);
+    void (KX_CALL* destroy_device)(
+        KxDevice, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* enumerate_physical_devices)(
+        KxInstance, uint32_t*, KxPhysicalDevice*);
+    KxResult (KX_CALL* get_proc_addr)(
+        KxInstance, const char*, KxPfnVoidFunction*);
+};
+
+/* -----------------------------------------------------------------------
+ * Device dispatch table
+ * --------------------------------------------------------------------- */
+struct DeviceDispatch {
+    KxResult (KX_CALL* allocate_memory)(
+        KxDevice, const KxMemoryAllocateInfo*,
+        const KxAllocationCallbacks*, KxDeviceMemory*);
+    void (KX_CALL* free_memory)(
+        KxDevice, KxDeviceMemory, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* create_buffer)(
+        KxDevice, const KxBufferCreateInfo*,
+        const KxAllocationCallbacks*, KxBuffer*);
+    void (KX_CALL* destroy_buffer)(
+        KxDevice, KxBuffer, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* create_image)(
+        KxDevice, const KxImageCreateInfo*,
+        const KxAllocationCallbacks*, KxImage*);
+    void (KX_CALL* destroy_image)(
+        KxDevice, KxImage, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* create_command_pool)(
+        KxDevice, const KxCommandPoolCreateInfo*,
+        const KxAllocationCallbacks*, KxCommandPool*);
+    void (KX_CALL* destroy_command_pool)(
+        KxDevice, KxCommandPool, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* allocate_command_buffers)(
+        KxDevice, const KxCommandBufferAllocateInfo*,
+        KxCommandBuffer*);
+    void (KX_CALL* free_command_buffers)(
+        KxDevice, KxCommandPool, uint32_t, const KxCommandBuffer*);
+    KxResult (KX_CALL* begin_command_buffer)(
+        KxCommandBuffer, const KxCommandBufferBeginInfo*);
+    KxResult (KX_CALL* end_command_buffer)(KxCommandBuffer);
+    KxResult (KX_CALL* queue_submit)(
+        KxQueue, uint32_t, const KxSubmitInfo*, KxFence);
+    KxResult (KX_CALL* queue_wait_idle)(KxQueue);
+    KxResult (KX_CALL* device_wait_idle)(KxDevice);
+};
+
+/* -----------------------------------------------------------------------
+ * Global dispatch table pointer (set up at instance creation)
+ * --------------------------------------------------------------------- */
+extern InstanceDispatch g_instance_dispatch;
+extern DeviceDispatch g_device_dispatch;
+
+} /* namespace kx */
+
+#endif /* KROMAX_SRC_CORE_DISPATCH_H */
