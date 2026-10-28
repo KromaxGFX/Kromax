@@ -35,4 +35,4 @@ Thumbs.db
 # Coverage
 *.gcno
 *.gcda
-coverage/
+coverage/.local
