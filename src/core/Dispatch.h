@@ -84,6 +84,14 @@ struct DeviceDispatch {
         KxQueue, uint32_t, const KxSubmitInfo*, KxFence);
     KxResult (KX_CALL* queue_wait_idle)(KxQueue);
     KxResult (KX_CALL* device_wait_idle)(KxDevice);
+    KxResult (KX_CALL* bind_buffer_memory)(
+        KxDevice, KxBuffer, KxDeviceMemory, uint64_t);
+    KxResult (KX_CALL* bind_image_memory)(
+        KxDevice, KxImage, KxDeviceMemory, uint64_t);
+    KxResult (KX_CALL* map_memory)(
+        KxDevice, KxDeviceMemory, uint64_t, uint64_t, KxMemoryMapFlags, void**);
+    void (KX_CALL* unmap_memory)(
+        KxDevice, KxDeviceMemory);
 };
 
 /* -----------------------------------------------------------------------

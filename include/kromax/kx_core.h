@@ -70,18 +70,21 @@ typedef enum KxStructureType {
     KX_STRUCTURE_TYPE_APPLICATION_INFO = 1,
     KX_STRUCTURE_TYPE_INSTANCE_CREATE_INFO = 2,
     KX_STRUCTURE_TYPE_DEVICE_CREATE_INFO = 3,
-    KX_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO = 4,
-    KX_STRUCTURE_TYPE_BUFFER_CREATE_INFO = 5,
-    KX_STRUCTURE_TYPE_IMAGE_CREATE_INFO = 6,
-    KX_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO = 7,
-    KX_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO = 8,
-    KX_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO = 9,
-    KX_STRUCTURE_TYPE_PIPELINE_CREATE_INFO = 10,
-    KX_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO = 11,
-    KX_STRUCTURE_TYPE_COMMAND_BUFFER_CREATE_INFO = 12,
-    KX_STRUCTURE_TYPE_FENCE_CREATE_INFO = 13,
-    KX_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO = 14,
-    KX_STRUCTURE_TYPE_SUBMIT_INFO = 15,
+    KX_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO = 4,
+    KX_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO = 5,
+    KX_STRUCTURE_TYPE_BUFFER_CREATE_INFO = 6,
+    KX_STRUCTURE_TYPE_IMAGE_CREATE_INFO = 7,
+    KX_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO = 8,
+    KX_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO = 9,
+    KX_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO = 10,
+    KX_STRUCTURE_TYPE_PIPELINE_CREATE_INFO = 11,
+    KX_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO = 12,
+    KX_STRUCTURE_TYPE_COMMAND_BUFFER_CREATE_INFO = 13,
+    KX_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO = 14,
+    KX_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO = 15,
+    KX_STRUCTURE_TYPE_FENCE_CREATE_INFO = 16,
+    KX_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO = 17,
+    KX_STRUCTURE_TYPE_SUBMIT_INFO = 18,
     KX_STRUCTURE_TYPE_PRESENT_INFO_EXT = 1000,
     KX_STRUCTURE_TYPE_DISPLAY_CREATE_INFO_EXT = 1001,
     KX_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_EXT = 1002,
@@ -294,6 +297,14 @@ typedef uint32_t KxAccessFlags;
 #define KX_ACCESS_MAX_ENUM 0x7FFFFFFFu
 
 
+typedef uint32_t KxColorComponentFlags;
+#define KX_COLOR_COMPONENT_R_BIT 0x00000001u
+#define KX_COLOR_COMPONENT_G_BIT 0x00000002u
+#define KX_COLOR_COMPONENT_B_BIT 0x00000004u
+#define KX_COLOR_COMPONENT_A_BIT 0x00000008u
+#define KX_COLOR_COMPONENT_MAX_ENUM 0x7FFFFFFFu
+
+
 
 typedef enum KxPhysicalDeviceType {
     KX_PHYSICAL_DEVICE_TYPE_OTHER = 0,
@@ -378,6 +389,70 @@ typedef enum KxShaderFormat {
     KX_SHADER_FORMAT_KIR_EXT = 2000,
     KX_SHADER_FORMAT_MAX_ENUM = 0x7FFFFFFF
 } KxShaderFormat;
+
+/* =======================================================================
+ * Shader callback ABI (for KX_SHADER_FORMAT_NATIVE_CALLBACK_EXT)
+ * ======================================================================= */
+
+/* Vertex shader input/output */
+typedef struct KxVertexInput {
+    const float* position;      /* vec3 or vec4 */
+    const float* normal;        /* vec3 */
+    const float* texcoord;      /* vec2 */
+    const float* color;         /* vec4 */
+    uint32_t instance_index;
+    uint32_t vertex_index;
+} KxVertexInput;
+
+typedef struct KxVertexOutput {
+    float position[4];          /* clip space position (vec4) */
+    float normal[3];            /* world space normal */
+    float texcoord[2];          /* texture coordinates */
+    float color[4];             /* vertex color */
+    float gl_Position[4];       /* built-in: clip space position */
+} KxVertexOutput;
+
+/* Fragment shader input/output */
+typedef struct KxFragmentInput {
+    float frag_coord[4];        /* fragment coordinate */
+    float front_facing;         /* 1.0 if front facing, 0.0 otherwise */
+    float point_coord[2];       /* point sprite coordinates */
+    float normal[3];            /* interpolated normal */
+    float texcoord[2];          /* interpolated texcoord */
+    float color[4];             /* interpolated color */
+} KxFragmentInput;
+
+typedef struct KxFragmentOutput {
+    float color[4];             /* output color (SV_Target0) */
+    float depth;                /* output depth (SV_Depth) */
+    uint32_t stencil;           /* output stencil */
+} KxFragmentOutput;
+
+/* Compute shader input/output */
+typedef struct KxComputeInput {
+    uint32_t group_id[3];       /* workgroup ID */
+    uint32_t local_id[3];       /* local invocation ID */
+    uint32_t global_id[3];      /* global invocation ID */
+    uint32_t local_index;       /* linear local index */
+} KxComputeInput;
+
+typedef struct KxComputeOutput {
+    /* No built-in outputs for compute; use buffer/image stores */
+} KxComputeOutput;
+
+/* Shader callback function signatures */
+typedef void (KX_CALL* KxVertexShaderCallback)(const KxVertexInput* input, KxVertexOutput* output, const void* push_constants);
+typedef void (KX_CALL* KxFragmentShaderCallback)(const KxFragmentInput* input, KxFragmentOutput* output, const void* push_constants);
+typedef void (KX_CALL* KxComputeShaderCallback)(const KxComputeInput* input, KxComputeOutput* output, const void* push_constants);
+
+/* Shader module create info for native callbacks */
+typedef struct KxShaderModuleNativeCallbackInfo {
+    KxVertexShaderCallback vertex_fn;
+    KxFragmentShaderCallback fragment_fn;
+    KxComputeShaderCallback compute_fn;
+    const void* push_constants;
+    uint32_t push_constants_size;
+} KxShaderModuleNativeCallbackInfo;
 
 typedef enum KxPrimitiveTopology {
     KX_PRIMITIVE_TOPOLOGY_POINT_LIST = 0,
@@ -613,6 +688,12 @@ typedef struct KxBufferCreateInfo {
     KxBool32 sharingModeExclusive;
 } KxBufferCreateInfo;
 
+typedef struct KxBufferCopy {
+    uint64_t srcOffset;
+    uint64_t dstOffset;
+    uint64_t size;
+} KxBufferCopy;
+
 typedef enum KxSampleCountFlagBits {
     KX_SAMPLE_COUNT_1_BIT = 0x00000001u,
     KX_SAMPLE_COUNT_2_BIT = 0x00000002u,
@@ -689,6 +770,28 @@ typedef struct KxPipelineLayoutCreateInfo {
     const void* pPushConstantRanges;
 } KxPipelineLayoutCreateInfo;
 
+/* Blend state per attachment */
+typedef struct KxPipelineColorBlendAttachmentState {
+    KxBool32 blendEnable;
+    KxBlendFactor srcColorBlendFactor;
+    KxBlendFactor dstColorBlendFactor;
+    KxBlendOp colorBlendOp;
+    KxBlendFactor srcAlphaBlendFactor;
+    KxBlendFactor dstAlphaBlendFactor;
+    KxBlendOp alphaBlendOp;
+    KxColorComponentFlags colorWriteMask;
+} KxPipelineColorBlendAttachmentState;
+
+typedef struct KxPipelineColorBlendStateCreateInfo {
+    KxStructureType sType;
+    const void* pNext;
+    KxBool32 logicOpEnable;
+    KxLogicOp logicOp;
+    uint32_t attachmentCount;
+    const KxPipelineColorBlendAttachmentState* pAttachments;
+    float blendConstants[4];
+} KxPipelineColorBlendStateCreateInfo;
+
 typedef struct KxPipelineCreateInfo {
     KxStructureType sType;
     const void* pNext;
@@ -702,6 +805,7 @@ typedef struct KxPipelineCreateInfo {
     KxBool32 depthTestEnable;
     KxBool32 depthWriteEnable;
     KxCompareOp depthCompareOp;
+    const KxPipelineColorBlendStateCreateInfo* pColorBlendState;
     KxShaderModule computeShaderModule;
     KxPipelineLayout layout;
     KxPipeline basePipelineHandle;

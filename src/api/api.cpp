@@ -19,6 +19,8 @@
 #include "Queue.h"
 
 #include "SoftwareDriver.h"
+#include "SoftwareCommandBuffer.h"
+#include "SoftwareDevice.h"
 
 namespace kx {
 
@@ -56,6 +58,21 @@ Device* find_device_locked(KxDevice device) {
 PhysicalDevice* find_physical_device_locked(KxPhysicalDevice pd) {
     for (auto& p : g_physical_devices()) {
         if (reinterpret_cast<KxPhysicalDevice>(p.get()) == pd) return p.get();
+    }
+    return nullptr;
+}
+
+Device* find_device_locked_by_command_buffer(KxCommandBuffer cb) {
+    for (auto& dev : g_devices()) {
+        auto* sw_dev = static_cast<SoftwareDevice*>(dev->driver_device());
+        if (sw_dev && sw_dev->find_command_buffer(cb)) return dev.get();
+    }
+    return nullptr;
+}
+
+Device* find_device_locked_by_queue(KxQueue queue) {
+    for (auto& dev : g_devices()) {
+        if (dev->owns_queue(queue)) return dev.get();
     }
     return nullptr;
 }
@@ -268,8 +285,10 @@ KxResult KX_CALL kxGetDeviceQueue(
     *pQueue = nullptr;
     kx::Device* dev = kx::find_device_locked(device);
     if (!dev) return KX_ERROR_INVALID_ARGUMENT;
-    (void)dev; (void)queueFamilyIndex; (void)queueIndex;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    kx::Queue* queue = dev->get_queue(queueFamilyIndex, queueIndex);
+    if (!queue) return KX_ERROR_INITIALIZATION_FAILED;
+    *pQueue = reinterpret_cast<KxQueue>(queue);
+    return KX_SUCCESS;
 }
 
 /* =======================================================================
@@ -298,6 +317,30 @@ void KX_CALL kxFreeMemory(
     kx::Device* dev = kx::find_device_locked(device);
     if (!dev || !dev->dispatch() || !dev->dispatch()->free_memory) return;
     dev->dispatch()->free_memory(device, memory, pAllocator);
+}
+
+KxResult KX_CALL kxMapMemory(
+    KxDevice device,
+    KxDeviceMemory memory,
+    uint64_t offset,
+    uint64_t size,
+    KxMemoryMapFlags flags,
+    void** ppData) {
+    if (!ppData) return KX_ERROR_INVALID_ARGUMENT;
+    *ppData = nullptr;
+    kx::Device* dev = kx::find_device_locked(device);
+    if (!dev) return KX_ERROR_INVALID_ARGUMENT;
+    if (!dev->dispatch() || !dev->dispatch()->map_memory)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return dev->dispatch()->map_memory(device, memory, offset, size, flags, ppData);
+}
+
+void KX_CALL kxUnmapMemory(
+    KxDevice device,
+    KxDeviceMemory memory) {
+    kx::Device* dev = kx::find_device_locked(device);
+    if (!dev || !dev->dispatch() || !dev->dispatch()->unmap_memory) return;
+    dev->dispatch()->unmap_memory(device, memory);
 }
 
 KxResult KX_CALL kxCreateBuffer(
@@ -329,8 +372,11 @@ KxResult KX_CALL kxBindBufferMemory(
     KxBuffer buffer,
     KxDeviceMemory memory,
     uint64_t memoryOffset) {
-    (void)device; (void)buffer; (void)memory; (void)memoryOffset;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    kx::Device* dev = kx::find_device_locked(device);
+    if (!dev) return KX_ERROR_INVALID_ARGUMENT;
+    if (!dev->dispatch() || !dev->dispatch()->bind_buffer_memory)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return dev->dispatch()->bind_buffer_memory(device, buffer, memory, memoryOffset);
 }
 
 KxResult KX_CALL kxCreateImage(
@@ -362,8 +408,11 @@ KxResult KX_CALL kxBindImageMemory(
     KxImage image,
     KxDeviceMemory memory,
     uint64_t memoryOffset) {
-    (void)device; (void)image; (void)memory; (void)memoryOffset;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    kx::Device* dev = kx::find_device_locked(device);
+    if (!dev) return KX_ERROR_INVALID_ARGUMENT;
+    if (!dev->dispatch() || !dev->dispatch()->bind_image_memory)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return dev->dispatch()->bind_image_memory(device, image, memory, memoryOffset);
 }
 
 /* Image views */
@@ -500,13 +549,19 @@ void KX_CALL kxFreeCommandBuffers(
 KxResult KX_CALL kxBeginCommandBuffer(
     KxCommandBuffer commandBuffer,
     const KxCommandBufferBeginInfo* pBeginInfo) {
-    (void)commandBuffer; (void)pBeginInfo;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    kx::Device* dev = kx::find_device_locked_by_command_buffer(commandBuffer);
+    if (!dev) return KX_ERROR_INVALID_ARGUMENT;
+    if (!dev->dispatch() || !dev->dispatch()->begin_command_buffer)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return dev->dispatch()->begin_command_buffer(commandBuffer, pBeginInfo);
 }
 
 KxResult KX_CALL kxEndCommandBuffer(KxCommandBuffer commandBuffer) {
-    (void)commandBuffer;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    kx::Device* dev = kx::find_device_locked_by_command_buffer(commandBuffer);
+    if (!dev) return KX_ERROR_INVALID_ARGUMENT;
+    if (!dev->dispatch() || !dev->dispatch()->end_command_buffer)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return dev->dispatch()->end_command_buffer(commandBuffer);
 }
 
 KxResult KX_CALL kxResetCommandBuffer(
@@ -581,18 +636,25 @@ KxResult KX_CALL kxQueueSubmit(
     uint32_t submitCount,
     const KxSubmitInfo* pSubmits,
     KxFence fence) {
-    (void)queue; (void)submitCount; (void)pSubmits; (void)fence;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    kx::Device* dev = kx::find_device_locked_by_queue(queue);
+    if (!dev) return KX_ERROR_INVALID_ARGUMENT;
+    if (!dev->dispatch() || !dev->dispatch()->queue_submit)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return dev->dispatch()->queue_submit(queue, submitCount, pSubmits, fence);
 }
 
 KxResult KX_CALL kxQueueWaitIdle(KxQueue queue) {
     (void)queue;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    // For software driver, queue operations are synchronous, so wait_idle is a no-op
+    return KX_SUCCESS;
 }
 
 KxResult KX_CALL kxDeviceWaitIdle(KxDevice device) {
-    (void)device;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    kx::Device* dev = kx::find_device_locked(device);
+    if (!dev) return KX_ERROR_INVALID_ARGUMENT;
+    if (!dev->dispatch() || !dev->dispatch()->device_wait_idle)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return dev->dispatch()->device_wait_idle(device);
 }
 
 /* Proc addresses */
@@ -682,8 +744,17 @@ void KX_CALL kxCmdCopyBuffer(
     KxBuffer dstBuffer,
     uint32_t regionCount,
     const void* pRegions) {
-    (void)commandBuffer; (void)srcBuffer; (void)dstBuffer;
     (void)regionCount; (void)pRegions;
+    kx::Device* dev = kx::find_device_locked_by_command_buffer(commandBuffer);
+    if (!dev) return;
+    auto* cmd = dev->find_command_buffer(commandBuffer);
+    if (!cmd) return;
+    auto* src = dev->driver_device()->find_buffer(srcBuffer);
+    auto* dst = dev->driver_device()->find_buffer(dstBuffer);
+    if (src && dst) {
+        // Simplified: assume single region covering entire buffer
+        cmd->record_copy_buffer(src, dst, 0, 0, dst->size());
+    }
 }
 
 void KX_CALL kxCmdCopyBufferToImage(
@@ -693,8 +764,17 @@ void KX_CALL kxCmdCopyBufferToImage(
     KxImageLayout dstImageLayout,
     uint32_t regionCount,
     const void* pRegions) {
-    (void)commandBuffer; (void)srcBuffer; (void)dstImage;
-    (void)dstImageLayout; (void)regionCount; (void)pRegions;
+    (void)regionCount; (void)pRegions; (void)dstImageLayout;
+    kx::Device* dev = kx::find_device_locked_by_command_buffer(commandBuffer);
+    if (!dev) return;
+    auto* cmd = dev->find_command_buffer(commandBuffer);
+    if (!cmd) return;
+    auto* src = dev->driver_device()->find_buffer(srcBuffer);
+    auto* dst = dev->driver_device()->find_image(dstImage);
+    if (src && dst) {
+        // Simplified: assume single region covering entire image
+        cmd->record_copy_buffer_to_image(src, dst, 0, dst->width(), dst->height());
+    }
 }
 
 void KX_CALL kxCmdClearImage(
@@ -705,8 +785,16 @@ void KX_CALL kxCmdClearImage(
     const void* pDepthStencil,
     uint32_t rangeCount,
     const void* pRanges) {
-    (void)commandBuffer; (void)image; (void)imageLayout;
-    (void)pColor; (void)pDepthStencil; (void)rangeCount; (void)pRanges;
+    (void)rangeCount; (void)pRanges; (void)imageLayout; (void)pDepthStencil;
+    kx::Device* dev = kx::find_device_locked_by_command_buffer(commandBuffer);
+    if (!dev) return;
+    auto* cmd = dev->find_command_buffer(commandBuffer);
+    if (!cmd) return;
+    auto* img = dev->driver_device()->find_image(image);
+    if (img && pColor) {
+        const float* color = static_cast<const float*>(pColor);
+        cmd->record_clear_image(img, imageLayout, color[0], color[1], color[2], color[3]);
+    }
 }
 
 void KX_CALL kxCmdPipelineBarrier(

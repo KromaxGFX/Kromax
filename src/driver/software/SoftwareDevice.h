@@ -33,11 +33,11 @@ public:
     PhysicalDevice* physical_device() const noexcept { return physical_device_; }
 
     /* Object lookups (public handle -> internal object) */
-    SoftwareMemory* find_memory(KxDeviceMemory mem) const noexcept;
-    SoftwareBuffer* find_buffer(KxBuffer buf) const noexcept;
-    SoftwareImage* find_image(KxImage img) const noexcept;
-    SoftwareCommandPool* find_command_pool(KxCommandPool pool) const noexcept;
-    SoftwareCommandBuffer* find_command_buffer(KxCommandBuffer cb) const noexcept;
+    SoftwareMemory* find_memory(KxDeviceMemory mem) noexcept;
+    SoftwareBuffer* find_buffer(KxBuffer buf) noexcept;
+    SoftwareImage* find_image(KxImage img) noexcept;
+    SoftwareCommandPool* find_command_pool(KxCommandPool pool) noexcept;
+    SoftwareCommandBuffer* find_command_buffer(KxCommandBuffer cb) noexcept;
 
     /* Object registration */
     KxDeviceMemory register_memory(std::unique_ptr<SoftwareMemory> mem);
@@ -93,9 +93,30 @@ public:
                           KxFence fence) override;
     KxResult queue_wait_idle() override;
     KxResult device_wait_idle() override;
+    KxResult bind_buffer_memory(
+        KxBuffer buffer,
+        KxDeviceMemory memory,
+        uint64_t memory_offset) override;
+    KxResult bind_image_memory(
+        KxImage image,
+        KxDeviceMemory memory,
+        uint64_t memory_offset) override;
+    KxResult map_memory(
+        KxDeviceMemory memory,
+        uint64_t offset,
+        uint64_t size,
+        KxMemoryMapFlags flags,
+        void** pp_data) override;
+    void unmap_memory(
+        KxDeviceMemory memory) override;
 
 private:
     PhysicalDevice* physical_device_;
+
+    void execute_command(const CommandVariant& cmd);
+    void execute_clear_image(const CmdClearImage& cmd);
+    void execute_copy_buffer(const CmdCopyBuffer& cmd);
+    void execute_copy_buffer_to_image(const CmdCopyBufferToImage& cmd);
 
     std::vector<std::unique_ptr<SoftwareMemory>> memories_;
     std::vector<std::unique_ptr<SoftwareBuffer>> buffers_;

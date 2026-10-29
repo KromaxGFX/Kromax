@@ -1,4 +1,6 @@
 #include "Device.h"
+#include "SoftwareDevice.h"
+#include "Queue.h"
 
 namespace kx {
 
@@ -26,6 +28,10 @@ Device::Device(KxPhysicalDevice physical_device,
     dispatch_.queue_submit = &Device::dispatch_queue_submit;
     dispatch_.queue_wait_idle = &Device::dispatch_queue_wait_idle;
     dispatch_.device_wait_idle = &Device::dispatch_device_wait_idle;
+    dispatch_.bind_buffer_memory = &Device::dispatch_bind_buffer_memory;
+    dispatch_.bind_image_memory = &Device::dispatch_bind_image_memory;
+    dispatch_.map_memory = &Device::dispatch_map_memory;
+    dispatch_.unmap_memory = &Device::dispatch_unmap_memory;
 }
 
 /* Static dispatch thunks - forward to driver device via find_device_locked. */
@@ -107,30 +113,92 @@ void Device::dispatch_free_command_buffers(KxDevice device, KxCommandPool pool,
 
 KxResult Device::dispatch_begin_command_buffer(KxCommandBuffer cb,
                                                const KxCommandBufferBeginInfo* info) {
-    (void)cb; (void)info;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    auto* dev = find_device_locked_by_command_buffer(cb);
+    return dev ? dev->driver_device()->begin_command_buffer(cb, info)
+               : KX_ERROR_DEVICE_LOST;
 }
 
 KxResult Device::dispatch_end_command_buffer(KxCommandBuffer cb) {
-    (void)cb;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    auto* dev = find_device_locked_by_command_buffer(cb);
+    return dev ? dev->driver_device()->end_command_buffer(cb)
+               : KX_ERROR_DEVICE_LOST;
 }
 
 KxResult Device::dispatch_queue_submit(KxQueue queue, uint32_t count,
                                        const KxSubmitInfo* submits, KxFence fence) {
-    (void)queue; (void)count; (void)submits; (void)fence;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    auto* dev = find_device_locked_by_queue(queue);
+    return dev ? dev->driver_device()->queue_submit(count, submits, fence)
+               : KX_ERROR_DEVICE_LOST;
 }
 
 KxResult Device::dispatch_queue_wait_idle(KxQueue queue) {
-    (void)queue;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    auto* dev = find_device_locked_by_queue(queue);
+    return dev ? dev->driver_device()->queue_wait_idle()
+               : KX_ERROR_DEVICE_LOST;
 }
 
 KxResult Device::dispatch_device_wait_idle(KxDevice device) {
     auto* dev = find_device_locked(device);
     return dev ? dev->driver_device()->device_wait_idle()
                : KX_ERROR_DEVICE_LOST;
+}
+
+KxResult Device::dispatch_bind_buffer_memory(KxDevice device,
+                                             KxBuffer buffer,
+                                             KxDeviceMemory memory,
+                                             uint64_t memory_offset) {
+    auto* dev = find_device_locked(device);
+    return dev ? dev->driver_device()->bind_buffer_memory(buffer, memory, memory_offset)
+               : KX_ERROR_DEVICE_LOST;
+}
+
+KxResult Device::dispatch_bind_image_memory(KxDevice device,
+                                            KxImage image,
+                                            KxDeviceMemory memory,
+                                            uint64_t memory_offset) {
+    auto* dev = find_device_locked(device);
+    return dev ? dev->driver_device()->bind_image_memory(image, memory, memory_offset)
+               : KX_ERROR_DEVICE_LOST;
+}
+
+KxResult Device::dispatch_map_memory(KxDevice device,
+                                     KxDeviceMemory memory,
+                                     uint64_t offset,
+                                     uint64_t size,
+                                     KxMemoryMapFlags flags,
+                                     void** pp_data) {
+    auto* dev = find_device_locked(device);
+    return dev ? dev->driver_device()->map_memory(memory, offset, size, flags, pp_data)
+               : KX_ERROR_DEVICE_LOST;
+}
+
+void Device::dispatch_unmap_memory(KxDevice device, KxDeviceMemory memory) {
+    auto* dev = find_device_locked(device);
+    if (dev) dev->driver_device()->unmap_memory(memory);
+}
+
+SoftwareCommandBuffer* Device::find_command_buffer(KxCommandBuffer cb) const {
+    return static_cast<SoftwareDevice*>(driver_device_.get())->find_command_buffer(cb);
+}
+
+Queue* Device::get_queue(uint32_t family_index, uint32_t index) noexcept {
+    // Create queue if it doesn't exist (simple approach: create on demand)
+    for (auto& q : queues_) {
+        if (q->family_index() == family_index && q->index() == index) {
+            return q.get();
+        }
+    }
+    auto queue = std::make_unique<Queue>(family_index, index);
+    Queue* ptr = queue.get();
+    queues_.push_back(std::move(queue));
+    return ptr;
+}
+
+bool Device::owns_queue(KxQueue queue) const noexcept {
+    for (auto& q : queues_) {
+        if (reinterpret_cast<KxQueue>(q.get()) == queue) return true;
+    }
+    return false;
 }
 
 } /* namespace kx */

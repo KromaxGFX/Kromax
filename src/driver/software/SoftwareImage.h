@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "kx_core.h"
+#include "SoftwareMemory.h"
 
 namespace kx {
 
@@ -32,18 +33,29 @@ public:
     void set_layout(KxImageLayout layout) noexcept { layout_ = layout; }
 
     /* Raw pixel access (format dependent) */
-    uint8_t* data() noexcept { return data_.data(); }
-    const uint8_t* data() const noexcept { return data_.data(); }
-    std::size_t data_size() const noexcept { return data_.size(); }
+    uint8_t* data() noexcept {
+        return memory_ ? memory_->data() : nullptr;
+    }
+    const uint8_t* data() const noexcept {
+        return memory_ ? memory_->data() : nullptr;
+    }
+    std::size_t data_size() const noexcept {
+        return memory_ ? memory_->size() : 0;
+    }
     std::size_t row_pitch() const noexcept { return row_pitch_; }
 
     /* Clear the whole image to a color (RGBA8) */
     void clear_color(float r, float g, float b, float a);
 
+    void bind_memory(SoftwareMemory* memory) noexcept {
+        memory_ = memory;
+        row_pitch_ = 0;
+    }
+
 private:
     KxImageCreateInfo create_info_;
     KxImageLayout layout_ = KX_IMAGE_LAYOUT_UNDEFINED;
-    std::vector<uint8_t> data_;
+    SoftwareMemory* memory_ = nullptr;
     std::size_t row_pitch_ = 0;
 };
 

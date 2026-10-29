@@ -20,6 +20,7 @@
 namespace kx {
 
 class Queue;
+class SoftwareCommandBuffer;
 
 class Device : public Object {
 public:
@@ -74,16 +75,40 @@ public:
                                           const KxSubmitInfo* submits, KxFence fence);
     static KxResult dispatch_queue_wait_idle(KxQueue queue);
     static KxResult dispatch_device_wait_idle(KxDevice device);
+    static KxResult dispatch_bind_buffer_memory(KxDevice device,
+                                                KxBuffer buffer,
+                                                KxDeviceMemory memory,
+                                                uint64_t memory_offset);
+    static KxResult dispatch_bind_image_memory(KxDevice device,
+                                               KxImage image,
+                                               KxDeviceMemory memory,
+                                               uint64_t memory_offset);
+    static KxResult dispatch_map_memory(KxDevice device,
+                                        KxDeviceMemory memory,
+                                        uint64_t offset,
+                                        uint64_t size,
+                                        KxMemoryMapFlags flags,
+                                        void** pp_data);
+    static void dispatch_unmap_memory(KxDevice device, KxDeviceMemory memory);
+
+    SoftwareCommandBuffer* find_command_buffer(KxCommandBuffer cb) const;
+
+    Queue* get_queue(uint32_t family_index, uint32_t index) noexcept;
+
+    bool owns_queue(KxQueue queue) const noexcept;
 
 private:
     KxPhysicalDevice physical_device_;
     const KxAllocationCallbacks* allocator_;
     std::unique_ptr<IDriverDevice> driver_device_;
     DeviceDispatch dispatch_;
+    std::vector<std::unique_ptr<Queue>> queues_;
 };
 
 /* Lookup a Device from its handle. Defined in api.cpp. */
 Device* find_device_locked(KxDevice device);
+Device* find_device_locked_by_command_buffer(KxCommandBuffer cb);
+Device* find_device_locked_by_queue(KxQueue queue);
 
 } /* namespace kx */
 

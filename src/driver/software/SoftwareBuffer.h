@@ -25,6 +25,11 @@ public:
         return memory_ ? memory_->data() + offset_ : nullptr;
     }
 
+    void bind_memory(SoftwareMemory* memory, uint64_t offset) noexcept {
+        memory_ = memory;
+        offset_ = offset;
+    }
+
 private:
     SoftwareMemory* memory_;
     uint64_t offset_;

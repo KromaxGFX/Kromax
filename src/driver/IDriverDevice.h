@@ -12,6 +12,11 @@
 
 namespace kx {
 
+class SoftwareBuffer;
+class SoftwareImage;
+class SoftwareCommandBuffer;
+class SoftwareCommandPool;
+
 class IDriverDevice {
 public:
     virtual ~IDriverDevice() = default;
@@ -74,6 +79,31 @@ public:
 
     virtual KxResult queue_wait_idle() = 0;
     virtual KxResult device_wait_idle() = 0;
+
+    virtual KxResult bind_buffer_memory(
+        KxBuffer buffer,
+        KxDeviceMemory memory,
+        uint64_t memory_offset) = 0;
+
+    virtual KxResult bind_image_memory(
+        KxImage image,
+        KxDeviceMemory memory,
+        uint64_t memory_offset) = 0;
+
+    virtual KxResult map_memory(
+        KxDeviceMemory memory,
+        uint64_t offset,
+        uint64_t size,
+        KxMemoryMapFlags flags,
+        void** pp_data) = 0;
+
+    virtual void unmap_memory(
+        KxDeviceMemory memory) = 0;
+
+    virtual SoftwareBuffer* find_buffer(KxBuffer buffer) = 0;
+    virtual SoftwareImage* find_image(KxImage image) = 0;
+    virtual SoftwareCommandBuffer* find_command_buffer(KxCommandBuffer cb) = 0;
+    virtual SoftwareCommandPool* find_command_pool(KxCommandPool pool) = 0;
 };
 
 } /* namespace kx */
