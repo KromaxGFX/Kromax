@@ -16,14 +16,14 @@
 #include <vector>
 
 #include "IDriverDevice.h"
+#include "PhysicalDevice.h"
+#include "SoftwareCommandBuffer.h"
+#include "SoftwareMemory.h"
+#include "SoftwareBuffer.h"
+#include "SoftwareImage.h"
+#include "SoftwareCommandPool.h"
 
 namespace kx {
-
-class SoftwareMemory;
-class SoftwareBuffer;
-class SoftwareImage;
-#include "SoftwareCommandBuffer.h"
-class SoftwareCommandPool;
 
 class SoftwareDevice : public IDriverDevice {
 public:

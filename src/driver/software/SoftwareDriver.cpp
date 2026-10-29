@@ -1,6 +1,8 @@
 #include "SoftwareDriver.h"
 
 #include <cstring>
+#include <memory>
+#include <vector>
 
 #include "Instance.h"
 #include "PhysicalDevice.h"
@@ -13,15 +15,14 @@ SoftwareDriver::enumerate_physical_devices(Instance* /*instance*/) {
     auto phys = std::make_unique<PhysicalDevice>();
 
     KxPhysicalDeviceProperties props{};
-    props.sType = KX_STRUCTURE_TYPE_APPLICATION_INFO; /* not used here */
     props.apiVersion = KX_API_VERSION_0_1;
     props.driverVersion = KX_MAKE_VERSION(0, 1, 0);
     props.vendorID = 0x1000; /* Kromax vendor ID */
     props.deviceID = 0x0001;
     props.deviceType = KX_PHYSICAL_DEVICE_TYPE_CPU;
-    std::snprintf(props.deviceName, sizeof(props.deviceName),
+    snprintf(props.deviceName, sizeof(props.deviceName),
                   "Kromax Software CPU");
-    std::snprintf(props.driverName, sizeof(props.driverName),
+    snprintf(props.driverName, sizeof(props.driverName),
                   "kromax-software");
     phys->set_properties(props);
 
@@ -59,10 +60,10 @@ SoftwareDriver::enumerate_physical_devices(Instance* /*instance*/) {
     return out;
 }
 
-Expected<std::unique_ptr<Device>>
+Expected<std::unique_ptr<IDriverDevice>>
 SoftwareDriver::create_device(PhysicalDevice* physical_device,
                               const KxDeviceCreateInfo* /*create_info*/) {
-    return std::make_unique<SoftwareDevice>(physical_device);
+    return std::unique_ptr<IDriverDevice>(std::make_unique<SoftwareDevice>(physical_device));
 }
 
 } /* namespace kx */

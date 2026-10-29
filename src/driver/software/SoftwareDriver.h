@@ -27,7 +27,7 @@ public:
     Expected<std::vector<std::unique_ptr<PhysicalDevice>>>
     enumerate_physical_devices(Instance* instance) override;
 
-    Expected<std::unique_ptr<Device>>
+    Expected<std::unique_ptr<IDriverDevice>>
     create_device(PhysicalDevice* physical_device,
                   const KxDeviceCreateInfo* create_info) override;
 };

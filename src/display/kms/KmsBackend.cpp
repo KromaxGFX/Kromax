@@ -39,6 +39,7 @@ void KmsBackend::shutdown() {}
 #else
 
 namespace kx {
+
 KxResult KmsBackend::initialize(const void*) { return KX_ERROR_FEATURE_NOT_PRESENT; }
 KxResult KmsBackend::create_framebuffer(uint32_t, uint32_t, KxFormat,
                                          BackendFramebuffer*) {
@@ -50,6 +51,7 @@ KxResult KmsBackend::present(const BackendFramebuffer*) {
 }
 KxResult KmsBackend::wait_vblank() { return KX_ERROR_FEATURE_NOT_PRESENT; }
 void KmsBackend::shutdown() {}
+
 } /* namespace kx */
 
 #endif /* KX_HAVE_LIBDRM */

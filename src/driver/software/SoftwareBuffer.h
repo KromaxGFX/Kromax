@@ -8,10 +8,9 @@
  */
 
 #include "kx_core.h"
+#include "SoftwareMemory.h"
 
 namespace kx {
-
-class SoftwareMemory;
 
 class SoftwareBuffer {
 public:

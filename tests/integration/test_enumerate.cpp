@@ -1,6 +1,7 @@
 // Integration test: enumerate physical devices
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <kromax/kromax.h>
-#include <doctest/doctest.h>
+#include <doctest.h>
 
 TEST_CASE("enumerate_physical_devices") {
     KxInstance instance = nullptr;

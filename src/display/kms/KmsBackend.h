@@ -9,14 +9,14 @@
  * compositor). Disabled unless libdrm is found.
  */
 
-#ifdef KX_HAVE_LIBDRM
-
-#include <xf86drm.h>
-#include <xf86drmMode.h>
-
 #include "IDisplayBackend.h"
 
 namespace kx {
+
+#ifdef KX_HAVE_LIBDRM
+#include <xf86drm.h>
+#include <xf86drmMode.h>
+#endif
 
 class KmsBackend : public IDisplayBackend {
 public:
@@ -34,6 +34,7 @@ public:
     KxResult wait_vblank() override;
     void shutdown() override;
 
+#ifdef KX_HAVE_LIBDRM
 private:
     int drm_fd_ = -1;
     uint32_t connector_id_ = 0;
@@ -42,10 +43,9 @@ private:
     uint32_t bo_handle_ = 0;
     uint8_t* bo_map_ = nullptr;
     std::size_t bo_size_ = 0;
+#endif
 };
 
 } /* namespace kx */
-
-#endif /* KX_HAVE_LIBDRM */
 
 #endif /* KROMAX_SRC_DISPLAY_KMS_KMSBACKEND_H */

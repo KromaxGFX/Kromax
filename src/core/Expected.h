@@ -118,14 +118,14 @@ public:
     template <typename U>
     constexpr T value_or(U&& default_value) const& noexcept(
         std::is_nothrow_copy_constructible_v<T> &&
-        std::is_nothrow_convertible_v<U, T>) {
+        std::is_nothrow_constructible_v<U, T>) {
         return has_value_ ? value_ : T(std::forward<U>(default_value));
     }
 
     template <typename U>
     T value_or(U&& default_value) && noexcept(
         std::is_nothrow_move_constructible_v<T> &&
-        std::is_nothrow_convertible_v<U, T>) {
+        std::is_nothrow_constructible_v<U, T>) {
         return has_value_ ? std::move(value_) : T(std::forward<U>(default_value));
     }
 

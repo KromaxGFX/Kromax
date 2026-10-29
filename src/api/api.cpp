@@ -22,7 +22,21 @@
 
 namespace kx {
 
-namespace {
+/* Global registry definitions */
+std::vector<std::unique_ptr<Instance>>& g_instances() {
+    static std::vector<std::unique_ptr<Instance>> instances;
+    return instances;
+}
+
+std::vector<std::unique_ptr<PhysicalDevice>>& g_physical_devices() {
+    static std::vector<std::unique_ptr<PhysicalDevice>> physical_devices;
+    return physical_devices;
+}
+
+std::vector<std::unique_ptr<Device>>& g_devices() {
+    static std::vector<std::unique_ptr<Device>> devices;
+    return devices;
+}
 
 Instance* find_instance_locked(KxInstance instance) {
     for (auto& inst : g_instances()) {
@@ -46,7 +60,15 @@ PhysicalDevice* find_physical_device_locked(KxPhysicalDevice pd) {
     return nullptr;
 }
 
-} /* namespace */
+} /* namespace kx */
+
+/* =======================================================================
+ * Public C API functions (extern "C" linkage)
+ * ======================================================================= */
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* =======================================================================
  * Instance
@@ -63,12 +85,12 @@ KxResult KX_CALL kxCreateInstance(
         return KX_ERROR_INVALID_ARGUMENT;
 
     /* Register built-in drivers (static registration). */
-    DriverRegistry::instance().register_driver(
-        std::make_unique<SoftwareDriver>());
+    kx::DriverRegistry::instance().register_driver(
+        std::make_unique<kx::SoftwareDriver>());
 
-    auto inst = std::make_unique<Instance>(pCreateInfo, pAllocator);
+    auto inst = std::make_unique<kx::Instance>(pCreateInfo, pAllocator);
     KxInstance handle = reinterpret_cast<KxInstance>(inst.get());
-    g_instances().push_back(std::move(inst));
+    kx::g_instances().push_back(std::move(inst));
     *pInstance = handle;
     return KX_SUCCESS;
 }
@@ -77,9 +99,9 @@ void KX_CALL kxDestroyInstance(
     KxInstance instance,
     const KxAllocationCallbacks* /*pAllocator*/) {
     if (!instance) return;
-    for (auto it = g_instances().begin(); it != g_instances().end(); ++it) {
+    for (auto it = kx::g_instances().begin(); it != kx::g_instances().end(); ++it) {
         if (reinterpret_cast<KxInstance>(it->get()) == instance) {
-            g_instances().erase(it);
+            kx::g_instances().erase(it);
             return;
         }
     }
@@ -95,10 +117,10 @@ KxResult KX_CALL kxEnumeratePhysicalDevices(
     KxPhysicalDevice* pPhysicalDevices) {
     if (!pPhysicalDeviceCount) return KX_ERROR_INVALID_ARGUMENT;
 
-    Instance* inst = find_instance_locked(instance);
+    kx::Instance* inst = kx::find_instance_locked(instance);
     if (!inst) return KX_ERROR_INVALID_ARGUMENT;
 
-    auto& registry = DriverRegistry::instance();
+    auto& registry = kx::DriverRegistry::instance();
 
     uint32_t total = 0;
     for (auto& driver : registry.drivers()) {
@@ -121,7 +143,7 @@ KxResult KX_CALL kxEnumeratePhysicalDevices(
             if (written >= count) break;
             pPhysicalDevices[written] =
                 reinterpret_cast<KxPhysicalDevice>(phys.get());
-            g_physical_devices().push_back(std::move(phys));
+            kx::g_physical_devices().push_back(std::move(phys));
             ++written;
         }
         if (written >= count) break;
@@ -135,7 +157,7 @@ KxResult KX_CALL kxGetPhysicalDeviceProperties(
     KxPhysicalDevice physicalDevice,
     KxPhysicalDeviceProperties* pProperties) {
     if (!pProperties) return KX_ERROR_INVALID_ARGUMENT;
-    PhysicalDevice* pd = find_physical_device_locked(physicalDevice);
+    kx::PhysicalDevice* pd = kx::find_physical_device_locked(physicalDevice);
     if (!pd) return KX_ERROR_INVALID_ARGUMENT;
     *pProperties = pd->properties();
     return KX_SUCCESS;
@@ -145,7 +167,7 @@ KxResult KX_CALL kxGetPhysicalDeviceFeatures(
     KxPhysicalDevice physicalDevice,
     KxPhysicalDeviceFeatures* pFeatures) {
     if (!pFeatures) return KX_ERROR_INVALID_ARGUMENT;
-    PhysicalDevice* pd = find_physical_device_locked(physicalDevice);
+    kx::PhysicalDevice* pd = kx::find_physical_device_locked(physicalDevice);
     if (!pd) return KX_ERROR_INVALID_ARGUMENT;
     *pFeatures = pd->features();
     return KX_SUCCESS;
@@ -155,7 +177,7 @@ KxResult KX_CALL kxGetPhysicalDeviceMemoryProperties(
     KxPhysicalDevice physicalDevice,
     KxPhysicalDeviceMemoryProperties* pMemoryProperties) {
     if (!pMemoryProperties) return KX_ERROR_INVALID_ARGUMENT;
-    PhysicalDevice* pd = find_physical_device_locked(physicalDevice);
+    kx::PhysicalDevice* pd = kx::find_physical_device_locked(physicalDevice);
     if (!pd) return KX_ERROR_INVALID_ARGUMENT;
     *pMemoryProperties = pd->memory_properties();
     return KX_SUCCESS;
@@ -166,7 +188,7 @@ KxResult KX_CALL kxGetPhysicalDeviceQueueFamilyProperties(
     uint32_t* pQueueFamilyPropertyCount,
     KxQueueFamilyProperties* pQueueFamilyProperties) {
     if (!pQueueFamilyPropertyCount) return KX_ERROR_INVALID_ARGUMENT;
-    PhysicalDevice* pd = find_physical_device_locked(physicalDevice);
+    kx::PhysicalDevice* pd = kx::find_physical_device_locked(physicalDevice);
     if (!pd) return KX_ERROR_INVALID_ARGUMENT;
 
     const auto& families = pd->queue_families();
@@ -201,11 +223,11 @@ KxResult KX_CALL kxCreateDevice(
     if (pCreateInfo->sType != KX_STRUCTURE_TYPE_DEVICE_CREATE_INFO)
         return KX_ERROR_INVALID_ARGUMENT;
 
-    PhysicalDevice* pd = find_physical_device_locked(physicalDevice);
+    kx::PhysicalDevice* pd = kx::find_physical_device_locked(physicalDevice);
     if (!pd) return KX_ERROR_INVALID_ARGUMENT;
 
-    auto& registry = DriverRegistry::instance();
-    IDriver* owner = nullptr;
+    auto& registry = kx::DriverRegistry::instance();
+    kx::IDriver* owner = nullptr;
     for (auto& driver : registry.drivers()) {
         owner = driver.get();
         break;
@@ -215,10 +237,12 @@ KxResult KX_CALL kxCreateDevice(
     auto result = owner->create_device(pd, pCreateInfo);
     if (!result.has_value()) return result.error();
 
-    auto dev = std::make_unique<Device>(
-        physicalDevice, pCreateInfo, pAllocator);
+    auto driver_device = std::move(result.value());
+
+    auto dev = std::make_unique<kx::Device>(
+        physicalDevice, pCreateInfo, pAllocator, std::move(driver_device));
     KxDevice handle = reinterpret_cast<KxDevice>(dev.get());
-    g_devices().push_back(std::move(dev));
+    kx::g_devices().push_back(std::move(dev));
     *pDevice = handle;
     return KX_SUCCESS;
 }
@@ -227,9 +251,9 @@ void KX_CALL kxDestroyDevice(
     KxDevice device,
     const KxAllocationCallbacks* /*pAllocator*/) {
     if (!device) return;
-    for (auto it = g_devices().begin(); it != g_devices().end(); ++it) {
+    for (auto it = kx::g_devices().begin(); it != kx::g_devices().end(); ++it) {
         if (reinterpret_cast<KxDevice>(it->get()) == device) {
-            g_devices().erase(it);
+            kx::g_devices().erase(it);
             return;
         }
     }
@@ -242,7 +266,7 @@ KxResult KX_CALL kxGetDeviceQueue(
     KxQueue* pQueue) {
     if (!pQueue) return KX_ERROR_INVALID_ARGUMENT;
     *pQueue = nullptr;
-    Device* dev = find_device_locked(device);
+    kx::Device* dev = kx::find_device_locked(device);
     if (!dev) return KX_ERROR_INVALID_ARGUMENT;
     (void)dev; (void)queueFamilyIndex; (void)queueIndex;
     return KX_ERROR_FEATURE_NOT_PRESENT;
@@ -259,7 +283,7 @@ KxResult KX_CALL kxAllocateMemory(
     KxDeviceMemory* pMemory) {
     if (!pMemory) return KX_ERROR_INVALID_ARGUMENT;
     *pMemory = nullptr;
-    Device* dev = find_device_locked(device);
+    kx::Device* dev = kx::find_device_locked(device);
     if (!dev) return KX_ERROR_INVALID_ARGUMENT;
     if (!dev->dispatch() || !dev->dispatch()->allocate_memory)
         return KX_ERROR_FEATURE_NOT_PRESENT;
@@ -271,7 +295,7 @@ void KX_CALL kxFreeMemory(
     KxDevice device,
     KxDeviceMemory memory,
     const KxAllocationCallbacks* pAllocator) {
-    Device* dev = find_device_locked(device);
+    kx::Device* dev = kx::find_device_locked(device);
     if (!dev || !dev->dispatch() || !dev->dispatch()->free_memory) return;
     dev->dispatch()->free_memory(device, memory, pAllocator);
 }
@@ -283,7 +307,7 @@ KxResult KX_CALL kxCreateBuffer(
     KxBuffer* pBuffer) {
     if (!pBuffer) return KX_ERROR_INVALID_ARGUMENT;
     *pBuffer = nullptr;
-    Device* dev = find_device_locked(device);
+    kx::Device* dev = kx::find_device_locked(device);
     if (!dev) return KX_ERROR_INVALID_ARGUMENT;
     if (!dev->dispatch() || !dev->dispatch()->create_buffer)
         return KX_ERROR_FEATURE_NOT_PRESENT;
@@ -295,7 +319,7 @@ void KX_CALL kxDestroyBuffer(
     KxDevice device,
     KxBuffer buffer,
     const KxAllocationCallbacks* pAllocator) {
-    Device* dev = find_device_locked(device);
+    kx::Device* dev = kx::find_device_locked(device);
     if (!dev || !dev->dispatch() || !dev->dispatch()->destroy_buffer) return;
     dev->dispatch()->destroy_buffer(device, buffer, pAllocator);
 }
@@ -316,7 +340,7 @@ KxResult KX_CALL kxCreateImage(
     KxImage* pImage) {
     if (!pImage) return KX_ERROR_INVALID_ARGUMENT;
     *pImage = nullptr;
-    Device* dev = find_device_locked(device);
+    kx::Device* dev = kx::find_device_locked(device);
     if (!dev) return KX_ERROR_INVALID_ARGUMENT;
     if (!dev->dispatch() || !dev->dispatch()->create_image)
         return KX_ERROR_FEATURE_NOT_PRESENT;
@@ -328,7 +352,7 @@ void KX_CALL kxDestroyImage(
     KxDevice device,
     KxImage image,
     const KxAllocationCallbacks* pAllocator) {
-    Device* dev = find_device_locked(device);
+    kx::Device* dev = kx::find_device_locked(device);
     if (!dev || !dev->dispatch() || !dev->dispatch()->destroy_image) return;
     dev->dispatch()->destroy_image(device, image, pAllocator);
 }
@@ -423,7 +447,7 @@ KxResult KX_CALL kxCreateCommandPool(
     KxCommandPool* pCommandPool) {
     if (!pCommandPool) return KX_ERROR_INVALID_ARGUMENT;
     *pCommandPool = nullptr;
-    Device* dev = find_device_locked(device);
+    kx::Device* dev = kx::find_device_locked(device);
     if (!dev) return KX_ERROR_INVALID_ARGUMENT;
     if (!dev->dispatch() || !dev->dispatch()->create_command_pool)
         return KX_ERROR_FEATURE_NOT_PRESENT;
@@ -435,7 +459,7 @@ void KX_CALL kxDestroyCommandPool(
     KxDevice device,
     KxCommandPool commandPool,
     const KxAllocationCallbacks* pAllocator) {
-    Device* dev = find_device_locked(device);
+    kx::Device* dev = kx::find_device_locked(device);
     if (!dev || !dev->dispatch() || !dev->dispatch()->destroy_command_pool)
         return;
     dev->dispatch()->destroy_command_pool(device, commandPool, pAllocator);
@@ -456,7 +480,7 @@ KxResult KX_CALL kxAllocateCommandBuffers(
     const KxCommandBufferAllocateInfo* pAllocateInfo,
     KxCommandBuffer* pCommandBuffers) {
     if (!pCommandBuffers) return KX_ERROR_INVALID_ARGUMENT;
-    Device* dev = find_device_locked(device);
+    kx::Device* dev = kx::find_device_locked(device);
     if (!dev) return KX_ERROR_INVALID_ARGUMENT;
     if (!dev->dispatch() || !dev->dispatch()->allocate_command_buffers)
         return KX_ERROR_FEATURE_NOT_PRESENT;
@@ -587,8 +611,6 @@ KxPfnVoidFunction KX_CALL kxGetInstanceProcAddr(
     return nullptr;
 }
 
-} /* namespace kx */
-
 /* =======================================================================
  * Commands recordable in a command buffer (stubs)
  * ======================================================================= */
@@ -703,3 +725,40 @@ void KX_CALL kxCmdPipelineBarrier(
     (void)bufferMemoryBarrierCount; (void)pBufferMemoryBarriers;
     (void)imageMemoryBarrierCount; (void)pImageMemoryBarriers;
 }
+
+/* =======================================================================
+ * Result string conversion
+ * ======================================================================= */
+
+const char* KX_CALL kxResultToString(KxResult result) {
+    switch (result) {
+    case KX_SUCCESS: return "KX_SUCCESS";
+    case KX_NOT_READY: return "KX_NOT_READY";
+    case KX_TIMEOUT: return "KX_TIMEOUT";
+    case KX_EVENT_SET: return "KX_EVENT_SET";
+    case KX_EVENT_RESET: return "KX_EVENT_RESET";
+    case KX_INCOMPLETE: return "KX_INCOMPLETE";
+    case KX_ERROR_OUT_OF_HOST_MEMORY: return "KX_ERROR_OUT_OF_HOST_MEMORY";
+    case KX_ERROR_OUT_OF_DEVICE_MEMORY: return "KX_ERROR_OUT_OF_DEVICE_MEMORY";
+    case KX_ERROR_INITIALIZATION_FAILED: return "KX_ERROR_INITIALIZATION_FAILED";
+    case KX_ERROR_DEVICE_LOST: return "KX_ERROR_DEVICE_LOST";
+    case KX_ERROR_MEMORY_MAP_FAILED: return "KX_ERROR_MEMORY_MAP_FAILED";
+    case KX_ERROR_LAYER_NOT_PRESENT: return "KX_ERROR_LAYER_NOT_PRESENT";
+    case KX_ERROR_EXTENSION_NOT_PRESENT: return "KX_ERROR_EXTENSION_NOT_PRESENT";
+    case KX_ERROR_FEATURE_NOT_PRESENT: return "KX_ERROR_FEATURE_NOT_PRESENT";
+    case KX_ERROR_INCOMPATIBLE_DRIVER: return "KX_ERROR_INCOMPATIBLE_DRIVER";
+    case KX_ERROR_TOO_MANY_OBJECTS: return "KX_ERROR_TOO_MANY_OBJECTS";
+    case KX_ERROR_FORMAT_NOT_SUPPORTED: return "KX_ERROR_FORMAT_NOT_SUPPORTED";
+    case KX_ERROR_FRAGMENTED_POOL: return "KX_ERROR_FRAGMENTED_POOL";
+    case KX_ERROR_OUT_OF_POOL_MEMORY: return "KX_ERROR_OUT_OF_POOL_MEMORY";
+    case KX_ERROR_INVALID_EXTERNAL_HANDLE: return "KX_ERROR_INVALID_EXTERNAL_HANDLE";
+    case KX_ERROR_INVALID_ARGUMENT: return "KX_ERROR_INVALID_ARGUMENT";
+    case KX_ERROR_INCOMPATIBLE_DISPLAY_KHR: return "KX_ERROR_INCOMPATIBLE_DISPLAY_KHR";
+    case KX_ERROR_VALIDATION_FAILED_EXT: return "KX_ERROR_VALIDATION_FAILED_EXT";
+    default: return "KX_UNKNOWN_RESULT";
+    }
+}
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif

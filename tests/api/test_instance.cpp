@@ -1,6 +1,7 @@
 // API test: instance creation
+#define DOCTEST_CONFIG_IMPLEMENT_WITH_MAIN
 #include <kromax/kromax.h>
-#include <doctest/doctest.h>
+#include <doctest.h>
 
 TEST_CASE("create_instance") {
     KxInstance instance = nullptr;

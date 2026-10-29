@@ -67,10 +67,10 @@ void SoftwareImage::clear_color(float r, float g, float b, float a) {
     uint8_t a8 = static_cast<uint8_t>(a * 255.0f);
 
     /* Assume RGBA8 for now */
-    uint32_t pixel_size = format_pixel_size(create_info.format);
-    for (uint32_t y = 0; y < create_info.height; ++y) {
+    uint32_t pixel_size = format_pixel_size(create_info_.format);
+    for (uint32_t y = 0; y < create_info_.height; ++y) {
         uint8_t* row = data_.data() + y * row_pitch_;
-        for (uint32_t x = 0; x < create_info.width; ++x) {
+        for (uint32_t x = 0; x < create_info_.width; ++x) {
             uint8_t* px = row + x * pixel_size;
             if (pixel_size >= 4) {
                 px[0] = r8;

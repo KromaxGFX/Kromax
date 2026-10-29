@@ -1,5 +1,6 @@
 #include "OffscreenBackend.h"
 #include "PpmWriter.h"
+#include "Logging.h"
 
 #include <cstdio>
 #include <cstring>

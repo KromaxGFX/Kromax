@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "Expected.h"
+#include "IDriverDevice.h"
 
 #include "kx_core.h"
 
@@ -40,8 +41,9 @@ public:
 
     /*
      * Create a device from a physical device.
+     * Returns the driver's internal device implementation.
      */
-    virtual Expected<std::unique_ptr<Device>>
+    virtual Expected<std::unique_ptr<IDriverDevice>>
     create_device(PhysicalDevice* physical_device,
                   const KxDeviceCreateInfo* create_info) = 0;
 };

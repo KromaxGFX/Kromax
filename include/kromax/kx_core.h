@@ -45,16 +45,14 @@ typedef enum KxResult {
     /* Extension / future error codes */
     KX_ERROR_INCOMPATIBLE_DISPLAY_KHR = -1000000004,
     KX_ERROR_VALIDATION_FAILED_EXT = -1000000015,
+} KxResult;
 
 /* Bool32 type for C compatibility */
+typedef uint32_t KxBool32;
 #define KX_TRUE 1u
 #define KX_FALSE 0u
 
-/*
-
-/*
- * Pack a semver into a uint32_t: major[21:22] minor[12:21] patch[0:11]
- */
+/* Pack a semver into a uint32_t: major[21:22] minor[12:21] patch[0:11] */
 #define KX_MAKE_VERSION(major, minor, patch) \
     ((uint32_t)(((uint32_t)(major) << 22) | ((uint32_t)(minor) << 12) | (uint32_t)(patch)))
 
@@ -244,6 +242,9 @@ typedef uint32_t KxShaderModuleCreateFlags;
 
 typedef uint32_t KxPipelineCreateFlags;
 #define KX_PIPELINE_CREATE_NONE 0u
+
+typedef uint32_t KxPipelineLayoutCreateFlags;
+#define KX_PIPELINE_LAYOUT_CREATE_NONE 0u
 
 typedef uint32_t KxCommandPoolCreateFlags;
 #define KX_COMMAND_POOL_CREATE_NONE 0u
@@ -558,10 +559,6 @@ typedef struct KxPhysicalDeviceMemoryProperties {
     KxMemoryType memoryTypes[32];
 } KxPhysicalDeviceMemoryProperties;
 
-typedef uint32_t KxBool32;
-#define KX_TRUE 1u
-#define KX_FALSE 0u
-
 /* =======================================================================
  * Create info structures (each starts with sType / pNext)
  * ======================================================================= */
@@ -615,6 +612,29 @@ typedef struct KxBufferCreateInfo {
     const uint32_t* pQueueFamilyIndices;
     KxBool32 sharingModeExclusive;
 } KxBufferCreateInfo;
+
+typedef enum KxSampleCountFlagBits {
+    KX_SAMPLE_COUNT_1_BIT = 0x00000001u,
+    KX_SAMPLE_COUNT_2_BIT = 0x00000002u,
+    KX_SAMPLE_COUNT_4_BIT = 0x00000004u,
+    KX_SAMPLE_COUNT_8_BIT = 0x00000008u,
+    KX_SAMPLE_COUNT_16_BIT = 0x00000010u,
+    KX_SAMPLE_COUNT_32_BIT = 0x00000020u,
+    KX_SAMPLE_COUNT_64_BIT = 0x00000040u,
+    KX_SAMPLE_COUNT_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
+} KxSampleCountFlagBits;
+typedef uint32_t KxSampleCountFlags;
+
+typedef enum KxImageViewType {
+    KX_IMAGE_VIEW_TYPE_1D = 0,
+    KX_IMAGE_VIEW_TYPE_2D = 1,
+    KX_IMAGE_VIEW_TYPE_3D = 2,
+    KX_IMAGE_VIEW_TYPE_1D_ARRAY = 3,
+    KX_IMAGE_VIEW_TYPE_2D_ARRAY = 4,
+    KX_IMAGE_VIEW_TYPE_CUBE = 5,
+    KX_IMAGE_VIEW_TYPE_CUBE_ARRAY = 6,
+    KX_IMAGE_VIEW_TYPE_MAX_ENUM = 0x7FFFFFFF
+} KxImageViewType;
 
 typedef struct KxImageCreateInfo {
     KxStructureType sType;
@@ -721,29 +741,6 @@ typedef struct KxSemaphoreCreateInfo {
     const void* pNext;
 } KxSemaphoreCreateInfo;
 
-typedef enum KxSampleCountFlagBits {
-    KX_SAMPLE_COUNT_1_BIT = 0x00000001u,
-    KX_SAMPLE_COUNT_2_BIT = 0x00000002u,
-    KX_SAMPLE_COUNT_4_BIT = 0x00000004u,
-    KX_SAMPLE_COUNT_8_BIT = 0x00000008u,
-    KX_SAMPLE_COUNT_16_BIT = 0x00000010u,
-    KX_SAMPLE_COUNT_32_BIT = 0x00000020u,
-    KX_SAMPLE_COUNT_64_BIT = 0x00000040u,
-    KX_SAMPLE_COUNT_FLAG_BITS_MAX_ENUM = 0x7FFFFFFF
-} KxSampleCountFlagBits;
-typedef uint32_t KxSampleCountFlags;
-
-typedef enum KxImageViewType {
-    KX_IMAGE_VIEW_TYPE_1D = 0,
-    KX_IMAGE_VIEW_TYPE_2D = 1,
-    KX_IMAGE_VIEW_TYPE_3D = 2,
-    KX_IMAGE_VIEW_TYPE_1D_ARRAY = 3,
-    KX_IMAGE_VIEW_TYPE_2D_ARRAY = 4,
-    KX_IMAGE_VIEW_TYPE_CUBE = 5,
-    KX_IMAGE_VIEW_TYPE_CUBE_ARRAY = 6,
-    KX_IMAGE_VIEW_TYPE_MAX_ENUM = 0x7FFFFFFF
-} KxImageViewType;
-
 /* =======================================================================
  * Command buffer submission
  * ======================================================================= */
@@ -826,6 +823,9 @@ KX_API void KX_CALL kxFreeMemory(
     KxDeviceMemory memory,
     const KxAllocationCallbacks* pAllocator);
 
+typedef uint32_t KxMemoryMapFlags;
+#define KX_MEMORY_MAP_NONE 0u
+
 KX_API KxResult KX_CALL kxMapMemory(
     KxDevice device,
     KxDeviceMemory memory,
@@ -837,9 +837,6 @@ KX_API KxResult KX_CALL kxMapMemory(
 KX_API void KX_CALL kxUnmapMemory(
     KxDevice device,
     KxDeviceMemory memory);
-
-typedef uint32_t KxMemoryMapFlags;
-#define KX_MEMORY_MAP_NONE 0u
 
 /* Buffers */
 KX_API KxResult KX_CALL kxCreateBuffer(
@@ -902,6 +899,8 @@ KX_API void KX_CALL kxDestroyShaderModule(
     const KxAllocationCallbacks* pAllocator);
 
 /* Pipelines */
+typedef struct KxPipelineCache_T* KxPipelineCache;
+
 KX_API KxResult KX_CALL kxCreatePipelineLayout(
     KxDevice device,
     const KxPipelineLayoutCreateInfo* pCreateInfo,
@@ -923,6 +922,8 @@ KX_API KxResult KX_CALL kxCreatePipeline(
 KX_API void KX_CALL kxDestroyPipeline(
     KxDevice device,
     KxPipeline pipeline,
+    const KxAllocationCallbacks* pAllocator);
+
 /* Command buffers */
 KX_API KxResult KX_CALL kxAllocateCommandBuffers(
     KxDevice device,
@@ -942,12 +943,12 @@ KX_API KxResult KX_CALL kxBeginCommandBuffer(
 KX_API KxResult KX_CALL kxEndCommandBuffer(
     KxCommandBuffer commandBuffer);
 
+typedef uint32_t KxCommandBufferResetFlags;
+#define KX_COMMAND_BUFFER_RESET_NONE 0u
+
 KX_API KxResult KX_CALL kxResetCommandBuffer(
     KxCommandBuffer commandBuffer,
     KxCommandBufferResetFlags flags);
-
-typedef uint32_t KxCommandBufferResetFlags;
-#define KX_COMMAND_BUFFER_RESET_NONE 0u
 
 /* Fences / semaphores */
 KX_API KxResult KX_CALL kxCreateFence(
@@ -1068,6 +1069,9 @@ KX_API void KX_CALL kxCmdClearImage(
     uint32_t rangeCount,
     const void* pRanges);
 
+typedef uint32_t KxDependencyFlags;
+#define KX_DEPENDENCY_NONE 0u
+
 KX_API void KX_CALL kxCmdPipelineBarrier(
     KxCommandBuffer commandBuffer,
     KxPipelineStageFlags srcStageMask,
@@ -1079,9 +1083,6 @@ KX_API void KX_CALL kxCmdPipelineBarrier(
     const void* pBufferMemoryBarriers,
     uint32_t imageMemoryBarrierCount,
     const void* pImageMemoryBarriers);
-
-typedef uint32_t KxDependencyFlags;
-#define KX_DEPENDENCY_NONE 0u
 
 /* Command pools */
 KX_API KxResult KX_CALL kxCreateCommandPool(
@@ -1095,15 +1096,13 @@ KX_API void KX_CALL kxDestroyCommandPool(
     KxCommandPool commandPool,
     const KxAllocationCallbacks* pAllocator);
 
+typedef uint32_t KxCommandPoolResetFlags;
+#define KX_COMMAND_POOL_RESET_NONE 0u
+
 KX_API KxResult KX_CALL kxResetCommandPool(
     KxDevice device,
     KxCommandPool commandPool,
     KxCommandPoolResetFlags flags);
-
-typedef uint32_t KxCommandPoolResetFlags;
-#define KX_COMMAND_POOL_RESET_NONE 0u
-
-typedef struct KxPipelineCache_T* KxPipelineCache;
 
 /* Device wait idle / proc addresses */
 KX_API KxResult KX_CALL kxDeviceWaitIdle(KxDevice device);
@@ -1117,6 +1116,8 @@ KX_API KxPfnVoidFunction KX_CALL kxGetDeviceProcAddr(
 KX_API KxPfnVoidFunction KX_CALL kxGetInstanceProcAddr(
     KxInstance instance,
     const char* pName);
+
+KX_API const char* KX_CALL kxResultToString(KxResult result);
 
 #ifdef __cplusplus
 } /* extern "C" */
