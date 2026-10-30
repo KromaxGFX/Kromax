@@ -77,7 +77,8 @@ void SoftwareRasterizer::process_fragments(const std::vector<Fragment>& fragment
                                            SoftwareImage* depth_attachment,
                                            const SoftwarePipeline* pipeline,
                                            bool is_front_facing,
-                                           const void* push_constants) const {
+                                           const void* push_constants,
+                                           const std::vector<KxBoundTexture>& bound_textures) const {
     uint8_t* color_data = color_attachment->data();
     float* depth_data = depth_attachment ? reinterpret_cast<float*>(depth_attachment->data()) : nullptr;
     bool depth_test_enable = pipeline->depth_test_enable();
@@ -115,6 +116,8 @@ void SoftwareRasterizer::process_fragments(const std::vector<Fragment>& fragment
             frag_in.color[1] = frag.color[1];
             frag_in.color[2] = frag.color[2];
             frag_in.color[3] = frag.color[3];
+            frag_in.boundTextureCount = static_cast<uint32_t>(bound_textures.size());
+            frag_in.pBoundTextures = bound_textures.data();
 
             run_fragment_shader(pipeline->fragment_shader(), frag_in, &frag_out, push_constants);
         } else {

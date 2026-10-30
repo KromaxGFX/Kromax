@@ -59,6 +59,12 @@ public:
     SoftwareDescriptorSet* find_descriptor_set(KxDescriptorSet set) noexcept;
     SoftwareSampler* find_sampler(KxSampler sampler) noexcept;
 
+    /* Descriptor set accessors (for rasterizer) */
+    KxPipelineLayout current_pipeline_layout() const noexcept { return current_pipeline_layout_; }
+    const KxDescriptorSet* current_descriptor_sets() const noexcept { return current_descriptor_sets_; }
+    uint32_t current_first_descriptor_set() const noexcept { return current_first_descriptor_set_; }
+    uint32_t current_descriptor_set_count() const noexcept { return current_descriptor_set_count_; }
+
     /* Object registration */
     KxDeviceMemory register_memory(std::unique_ptr<SoftwareMemory> mem);
     KxBuffer register_buffer(std::unique_ptr<SoftwareBuffer> buf);
