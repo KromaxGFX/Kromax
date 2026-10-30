@@ -47,6 +47,24 @@ Device::Device(KxPhysicalDevice physical_device,
     dispatch_.destroy_pipeline_layout = &Device::dispatch_destroy_pipeline_layout;
     dispatch_.create_pipeline = &Device::dispatch_create_pipeline;
     dispatch_.destroy_pipeline = &Device::dispatch_destroy_pipeline;
+
+    /* Descriptor set layout */
+    dispatch_.create_descriptor_set_layout = &Device::dispatch_create_descriptor_set_layout;
+    dispatch_.destroy_descriptor_set_layout = &Device::dispatch_destroy_descriptor_set_layout;
+
+    /* Descriptor pool */
+    dispatch_.create_descriptor_pool = &Device::dispatch_create_descriptor_pool;
+    dispatch_.destroy_descriptor_pool = &Device::dispatch_destroy_descriptor_pool;
+    dispatch_.reset_descriptor_pool = &Device::dispatch_reset_descriptor_pool;
+
+    /* Descriptor set */
+    dispatch_.allocate_descriptor_sets = &Device::dispatch_allocate_descriptor_sets;
+    dispatch_.free_descriptor_sets = &Device::dispatch_free_descriptor_sets;
+    dispatch_.update_descriptor_sets = &Device::dispatch_update_descriptor_sets;
+
+    /* Sampler */
+    dispatch_.create_sampler = &Device::dispatch_create_sampler;
+    dispatch_.destroy_sampler = &Device::dispatch_destroy_sampler;
 }
 
 SoftwareCommandBuffer* Device::find_command_buffer(KxCommandBuffer cb) const {
