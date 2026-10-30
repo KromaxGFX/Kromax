@@ -28,6 +28,10 @@
 #include "SoftwarePipeline.h"
 #include "SoftwarePipelineLayout.h"
 #include "SoftwareShaderModule.h"
+#include "SoftwareDescriptorSetLayout.h"
+#include "SoftwareDescriptorPool.h"
+#include "SoftwareDescriptorSet.h"
+#include "SoftwareSampler.h"
 
 namespace kx {
 
@@ -50,6 +54,10 @@ public:
     SoftwarePipelineLayout* find_pipeline_layout(KxPipelineLayout layout) noexcept;
     SoftwarePipeline* find_pipeline(KxPipeline pipeline) noexcept;
     SoftwareShaderModule* find_shader_module(KxShaderModule module) noexcept;
+    SoftwareDescriptorSetLayout* find_descriptor_set_layout(KxDescriptorSetLayout layout) noexcept;
+    SoftwareDescriptorPool* find_descriptor_pool(KxDescriptorPool pool) noexcept;
+    SoftwareDescriptorSet* find_descriptor_set(KxDescriptorSet set) noexcept;
+    SoftwareSampler* find_sampler(KxSampler sampler) noexcept;
 
     /* Object registration */
     KxDeviceMemory register_memory(std::unique_ptr<SoftwareMemory> mem);
@@ -63,6 +71,10 @@ public:
     KxPipelineLayout register_pipeline_layout(std::unique_ptr<SoftwarePipelineLayout> layout);
     KxPipeline register_pipeline(std::unique_ptr<SoftwarePipeline> pipeline);
     KxShaderModule register_shader_module(std::unique_ptr<SoftwareShaderModule> module);
+    KxDescriptorSetLayout register_descriptor_set_layout(std::unique_ptr<SoftwareDescriptorSetLayout> layout);
+    KxDescriptorPool register_descriptor_pool(std::unique_ptr<SoftwareDescriptorPool> pool);
+    KxDescriptorSet register_descriptor_set(std::unique_ptr<SoftwareDescriptorSet> set);
+    KxSampler register_sampler(std::unique_ptr<SoftwareSampler> sampler);
 
     void unregister_memory(KxDeviceMemory mem);
     void unregister_buffer(KxBuffer buf);
@@ -75,6 +87,10 @@ public:
     void unregister_pipeline_layout(KxPipelineLayout layout);
     void unregister_pipeline(KxPipeline pipeline);
     void unregister_shader_module(KxShaderModule module);
+    void unregister_descriptor_set_layout(KxDescriptorSetLayout layout);
+    void unregister_descriptor_pool(KxDescriptorPool pool);
+    void unregister_descriptor_set(KxDescriptorSet set);
+    void unregister_sampler(KxSampler sampler);
 
     /* IDriverDevice */
     KxResult allocate_memory(const KxMemoryAllocateInfo*, const KxAllocationCallbacks*, KxDeviceMemory*) override;
@@ -113,6 +129,24 @@ public:
     KxResult create_shader_module(const KxShaderModuleCreateInfo*, const KxAllocationCallbacks*, KxShaderModule*) override;
     void destroy_shader_module(KxShaderModule, const KxAllocationCallbacks*) override;
 
+    /* Descriptor set layout */
+    KxResult create_descriptor_set_layout(const KxDescriptorSetLayoutCreateInfo*, const KxAllocationCallbacks*, KxDescriptorSetLayout*) override;
+    void destroy_descriptor_set_layout(KxDescriptorSetLayout, const KxAllocationCallbacks*) override;
+
+    /* Descriptor pool */
+    KxResult create_descriptor_pool(const KxDescriptorPoolCreateInfo*, const KxAllocationCallbacks*, KxDescriptorPool*) override;
+    void destroy_descriptor_pool(KxDescriptorPool, const KxAllocationCallbacks*) override;
+    KxResult reset_descriptor_pool(KxDescriptorPool, KxDescriptorPoolResetFlags) override;
+
+    /* Descriptor set */
+    KxResult allocate_descriptor_sets(const KxDescriptorSetAllocateInfo*, KxDescriptorSet*) override;
+    KxResult free_descriptor_sets(KxDescriptorPool, uint32_t, const KxDescriptorSet*) override;
+    void update_descriptor_sets(uint32_t, const KxWriteDescriptorSet*, uint32_t, const KxCopyDescriptorSet*) override;
+
+    /* Sampler */
+    KxResult create_sampler(const KxSamplerCreateInfo*, const KxAllocationCallbacks*, KxSampler*) override;
+    void destroy_sampler(KxSampler, const KxAllocationCallbacks*) override;
+
 private:
     PhysicalDevice* physical_device_;
 
@@ -148,6 +182,10 @@ private:
     std::vector<std::unique_ptr<SoftwarePipelineLayout>> pipeline_layouts_;
     std::vector<std::unique_ptr<SoftwarePipeline>> pipelines_;
     std::vector<std::unique_ptr<SoftwareShaderModule>> shader_modules_;
+    std::vector<std::unique_ptr<SoftwareDescriptorSetLayout>> descriptor_set_layouts_;
+    std::vector<std::unique_ptr<SoftwareDescriptorPool>> descriptor_pools_;
+    std::vector<std::unique_ptr<SoftwareDescriptorSet>> descriptor_sets_;
+    std::vector<std::unique_ptr<SoftwareSampler>> samplers_;
 };
 
 } /* namespace kx */

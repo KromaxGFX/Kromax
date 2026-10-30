@@ -128,6 +128,10 @@ add_library(kromax
 
     src/driver/software/SoftwareCommandPool.h
     src/driver/software/SoftwareCommandBufferCommands.h
+    src/driver/software/SoftwareDescriptorSetLayout.h
+    src/driver/software/SoftwareDescriptorPool.h
+    src/driver/software/SoftwareDescriptorSet.h
+    src/driver/software/SoftwareSampler.h
 
     src/driver/amdgpu/AmdGpuDriver.h
 
@@ -199,6 +203,7 @@ target_sources(kromax PRIVATE
     src/driver/software/SoftwarePipeline.cpp
     src/driver/software/SoftwarePipelineLayout.cpp
     src/driver/software/SoftwareShaderModule.cpp
+    src/driver/software/SoftwareDescriptorSet.cpp
     src/driver/software/SoftwareRasterizerDraw.cpp
     src/driver/software/SoftwareRasterizerDrawIndexed.cpp
     src/driver/software/SoftwareRasterizerVertex.cpp
