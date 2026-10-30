@@ -10,8 +10,66 @@
 #include "SoftwarePipeline.h"
 #include "SoftwareImage.h"
 #include "SoftwareCommandBuffer.h"
+#include "SoftwareDescriptorSet.h"
+#include "SoftwareImageView.h"
+#include "SoftwareSampler.h"
+
+#include <vector>
 
 namespace kx {
+
+// Resolve bound descriptor sets into KxBoundTexture array for fragment shader
+static void resolve_bound_textures(SoftwareDevice* device,
+                                   KxPipelineLayout /*layout*/,
+                                   uint32_t /*first_set*/,
+                                   uint32_t set_count,
+                                   const KxDescriptorSet* sets,
+                                   std::vector<KxBoundTexture>* out_textures) {
+    out_textures->clear();
+    if (!device || set_count == 0 || !sets) return;
+
+    // In a real implementation, we'd use the pipeline layout to know which bindings
+    // correspond to combined image samplers. For now, we scan all bound descriptor sets
+    // and extract any image descriptors.
+    for (uint32_t si = 0; si < set_count; ++si) {
+        auto* set = device->find_descriptor_set(sets[si]);
+        if (!set) continue;
+
+        auto* set_layout = set->layout();
+        if (!set_layout) continue;
+
+        for (uint32_t bi = 0; bi < set_layout->binding_count(); ++bi) {
+            const auto& binding = set_layout->bindings()[bi];
+            if (binding.descriptorType != KX_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER &&
+                binding.descriptorType != KX_DESCRIPTOR_TYPE_SAMPLED_IMAGE) {
+                continue;
+            }
+
+            const auto& binding_data = set->binding_data(bi);
+            for (uint32_t ai = 0; ai < binding.descriptorCount; ++ai) {
+                if (ai >= binding_data.size()) break;
+                const auto& desc = binding_data[ai];
+                if (!desc.valid) continue;
+
+                if (desc.data.index() == 1) { // ImageDescriptor
+                    const auto& img_desc = std::get<1>(desc.data);
+                    if (img_desc.image_view) {
+                        auto* image = img_desc.image_view->image();
+                        KxBoundTexture bt{};
+                        bt.sampler = reinterpret_cast<KxSampler>(img_desc.sampler);
+                        bt.imageView = reinterpret_cast<KxImageView>(img_desc.image_view);
+                        bt.width = image->width();
+                        bt.height = image->height();
+                        bt.rowPitch = static_cast<uint32_t>(image->row_pitch());
+                        bt.format = image->format();
+                        bt.pTexels = image->data();
+                        out_textures->push_back(bt);
+                    }
+                }
+            }
+        }
+    }
+}
 
 void SoftwareRasterizer::draw_indexed(SoftwareDevice* device,
                                       SoftwarePipeline* pipeline,
@@ -34,6 +92,15 @@ void SoftwareRasterizer::draw_indexed(SoftwareDevice* device,
     if (pipeline->pipeline_layout() && pipeline->vertex_shader()) {
         push_constants = pipeline->vertex_shader()->push_constants;
     }
+
+    // Resolve bound textures from current descriptor sets
+    std::vector<KxBoundTexture> bound_textures;
+    resolve_bound_textures(device,
+                           device->current_pipeline_layout(),
+                           device->current_first_descriptor_set(),
+                           device->current_descriptor_set_count(),
+                           device->current_descriptor_sets(),
+                           &bound_textures);
 
     // Get index buffer data
     const uint8_t* index_data = index_buffer.buffer->mapped_ptr() + index_buffer.offset;
@@ -138,9 +205,9 @@ void SoftwareRasterizer::draw_indexed(SoftwareDevice* device,
             std::vector<Fragment> fragments;
             rasterize_triangle(vs_out[0], vs_out[1], vs_out[2], width, height, fragments);
 
-            // Process fragments
+            // Process fragments with bound textures
             process_fragments(fragments, width, height, color_attachment, depth_attachment,
-                             pipeline, is_front_facing, push_constants);
+                             pipeline, is_front_facing, push_constants, bound_textures);
         }
     }
 }

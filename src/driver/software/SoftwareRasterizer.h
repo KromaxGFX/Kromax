@@ -13,6 +13,7 @@
 
 #include "kx_core.h"
 #include "SoftwareCommandBuffer.h"
+#include "SoftwareDescriptorSet.h"
 
 namespace kx {
 
@@ -105,7 +106,8 @@ private:
                            SoftwareImage* depth_attachment,
                            const SoftwarePipeline* pipeline,
                            bool is_front_facing,
-                           const void* push_constants) const;
+                           const void* push_constants,
+                           const std::vector<KxBoundTexture>& bound_textures) const;
 
     // Triangle clipping against view frustum
     bool clip_triangle(const Vertex& v0, const Vertex& v1, const Vertex& v2,

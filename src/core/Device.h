@@ -109,6 +109,43 @@ public:
                                         void** pp_data);
     static void dispatch_unmap_memory(KxDevice device, KxDeviceMemory memory);
 
+    // Descriptor set layout
+    static KxResult dispatch_create_descriptor_set_layout(KxDevice device,
+                                                          const KxDescriptorSetLayoutCreateInfo* info,
+                                                          const KxAllocationCallbacks* alloc,
+                                                          KxDescriptorSetLayout* layout);
+    static void dispatch_destroy_descriptor_set_layout(KxDevice device, KxDescriptorSetLayout layout,
+                                                        const KxAllocationCallbacks* alloc);
+
+    // Descriptor pool
+    static KxResult dispatch_create_descriptor_pool(KxDevice device,
+                                                    const KxDescriptorPoolCreateInfo* info,
+                                                    const KxAllocationCallbacks* alloc,
+                                                    KxDescriptorPool* pool);
+    static void dispatch_destroy_descriptor_pool(KxDevice device, KxDescriptorPool pool,
+                                                 const KxAllocationCallbacks* alloc);
+    static KxResult dispatch_reset_descriptor_pool(KxDevice device, KxDescriptorPool pool,
+                                                   KxDescriptorPoolResetFlags flags);
+
+    // Descriptor set
+    static KxResult dispatch_allocate_descriptor_sets(KxDevice device,
+                                                      const KxDescriptorSetAllocateInfo* info,
+                                                      KxDescriptorSet* sets);
+    static KxResult dispatch_free_descriptor_sets(KxDevice device, KxDescriptorPool pool,
+                                                  uint32_t count, const KxDescriptorSet* sets);
+    static void dispatch_update_descriptor_sets(KxDevice device, uint32_t descriptor_write_count,
+                                                const KxWriteDescriptorSet* descriptor_writes,
+                                                uint32_t descriptor_copy_count,
+                                                const KxCopyDescriptorSet* descriptor_copies);
+
+    // Sampler
+    static KxResult dispatch_create_sampler(KxDevice device,
+                                            const KxSamplerCreateInfo* info,
+                                            const KxAllocationCallbacks* alloc,
+                                            KxSampler* sampler);
+    static void dispatch_destroy_sampler(KxDevice device, KxSampler sampler,
+                                         const KxAllocationCallbacks* alloc);
+
     // Shader module
     static KxResult dispatch_create_shader_module(KxDevice device,
                                                   const KxShaderModuleCreateInfo* info,

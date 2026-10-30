@@ -6,3 +6,10 @@ target_include_directories(test_integration PRIVATE ${DOCTEST_INCLUDE_DIR})
 target_link_libraries(test_integration PRIVATE kromax)
 target_include_directories(test_integration PRIVATE ${CMAKE_SOURCE_DIR}/include)
 add_test(NAME integration_tests COMMAND test_integration)
+
+# Triangle offscreen integration test
+add_executable(test_triangle_offscreen test_triangle_offscreen.cpp)
+target_include_directories(test_triangle_offscreen PRIVATE ${DOCTEST_INCLUDE_DIR})
+target_link_libraries(test_triangle_offscreen PRIVATE kromax)
+target_include_directories(test_triangle_offscreen PRIVATE ${CMAKE_SOURCE_DIR}/include)
+add_test(NAME triangle_offscreen_tests COMMAND test_triangle_offscreen)

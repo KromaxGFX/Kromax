@@ -35,6 +35,7 @@ Thumbs.db
 # Coverage
 *.gcno
 *.gcda
-coverage/.local
-.local
+coverage/
+
+# Local config
 .local

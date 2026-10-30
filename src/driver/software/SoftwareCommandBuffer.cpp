@@ -120,4 +120,26 @@ void SoftwareCommandBuffer::record_next_subpass(KxSubpassContents contents) {
     current_subpass_++;
 }
 
+void SoftwareCommandBuffer::record_bind_descriptor_sets(KxPipelineBindPoint bind_point,
+                                                        KxPipelineLayout layout,
+                                                        uint32_t first_set,
+                                                        uint32_t descriptor_set_count,
+                                                        const KxDescriptorSet* sets,
+                                                        uint32_t dynamic_offset_count,
+                                                        const uint32_t* dynamic_offsets) {
+    CmdBindDescriptorSets cmd;
+    cmd.bind_point = bind_point;
+    cmd.layout = layout;
+    cmd.first_set = first_set;
+    cmd.descriptor_set_count = descriptor_set_count;
+    for (uint32_t i = 0; i < descriptor_set_count && i < 16; ++i) {
+        cmd.sets[i] = sets[i];
+    }
+    cmd.dynamic_offset_count = dynamic_offset_count;
+    for (uint32_t i = 0; i < dynamic_offset_count && i < 16; ++i) {
+        cmd.dynamic_offsets[i] = dynamic_offsets[i];
+    }
+    commands_.push_back(cmd);
+}
+
 } /* namespace kx */
