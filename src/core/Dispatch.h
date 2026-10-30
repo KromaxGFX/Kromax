@@ -32,6 +32,8 @@ class CommandPool;
 class CommandBuffer;
 class Fence;
 class Semaphore;
+class RenderPass;
+class Framebuffer;
 
 /* -----------------------------------------------------------------------
  * Instance dispatch table
@@ -67,6 +69,21 @@ struct DeviceDispatch {
         const KxAllocationCallbacks*, KxImage*);
     void (KX_CALL* destroy_image)(
         KxDevice, KxImage, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* create_image_view)(
+        KxDevice, const KxImageViewCreateInfo*,
+        const KxAllocationCallbacks*, KxImageView*);
+    void (KX_CALL* destroy_image_view)(
+        KxDevice, KxImageView, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* create_render_pass)(
+        KxDevice, const KxRenderPassCreateInfo*,
+        const KxAllocationCallbacks*, KxRenderPass*);
+    void (KX_CALL* destroy_render_pass)(
+        KxDevice, KxRenderPass, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* create_framebuffer)(
+        KxDevice, const KxFramebufferCreateInfo*,
+        const KxAllocationCallbacks*, KxFramebuffer*);
+    void (KX_CALL* destroy_framebuffer)(
+        KxDevice, KxFramebuffer, const KxAllocationCallbacks*);
     KxResult (KX_CALL* create_command_pool)(
         KxDevice, const KxCommandPoolCreateInfo*,
         const KxAllocationCallbacks*, KxCommandPool*);
@@ -92,6 +109,21 @@ struct DeviceDispatch {
         KxDevice, KxDeviceMemory, uint64_t, uint64_t, KxMemoryMapFlags, void**);
     void (KX_CALL* unmap_memory)(
         KxDevice, KxDeviceMemory);
+    KxResult (KX_CALL* create_shader_module)(
+        KxDevice, const KxShaderModuleCreateInfo*,
+        const KxAllocationCallbacks*, KxShaderModule*);
+    void (KX_CALL* destroy_shader_module)(
+        KxDevice, KxShaderModule, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* create_pipeline_layout)(
+        KxDevice, const KxPipelineLayoutCreateInfo*,
+        const KxAllocationCallbacks*, KxPipelineLayout*);
+    void (KX_CALL* destroy_pipeline_layout)(
+        KxDevice, KxPipelineLayout, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* create_pipeline)(
+        KxDevice, KxPipelineCache, const KxPipelineCreateInfo*,
+        const KxAllocationCallbacks*, KxPipeline*);
+    void (KX_CALL* destroy_pipeline)(
+        KxDevice, KxPipeline, const KxAllocationCallbacks*);
 };
 
 /* -----------------------------------------------------------------------
