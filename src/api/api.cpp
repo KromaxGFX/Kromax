@@ -17,6 +17,7 @@
 #include "PhysicalDevice.h"
 #include "Device.h"
 #include "Queue.h"
+#include "kx_display.h"
 
 #include "SoftwareDriver.h"
 #include "SoftwareCommandBuffer.h"
@@ -124,6 +125,30 @@ KxResult KX_CALL kxCreateSemaphore(KxDevice, const KxSemaphoreCreateInfo*, const
 void KX_CALL kxDestroySemaphore(KxDevice, KxSemaphore, const KxAllocationCallbacks*);
 KxResult KX_CALL kxQueueSubmit(KxQueue, uint32_t, const KxSubmitInfo*, KxFence);
 KxResult KX_CALL kxQueueWaitIdle(KxQueue);
+KxResult KX_CALL kxCreateDisplayEXT(KxInstance instance, 
+    const KxDisplayCreateInfoEXT* pCreateInfo, 
+    const KxAllocationCallbacks* pAllocator, 
+    KxDisplayEXT* pDisplay);
+void KX_CALL kxDestroyDisplayEXT(KxInstance instance, KxDisplayEXT display, 
+    const KxAllocationCallbacks* pAllocator);
+KxResult KX_CALL kxCreateSwapchainEXT(KxDevice device, 
+    const KxSwapchainCreateInfoEXT* pCreateInfo, 
+    const KxAllocationCallbacks* pAllocator, 
+    KxSwapchainEXT* pSwapchain);
+void KX_CALL kxDestroySwapchainEXT(KxDevice device, KxSwapchainEXT swapchain, 
+    const KxAllocationCallbacks* pAllocator);
+KxResult KX_CALL kxGetSwapchainImagesEXT(KxDevice device, 
+    KxSwapchainEXT swapchain, 
+    uint32_t* pImageCount, 
+    KxImage* pImages);
+KxResult KX_CALL kxAcquireNextImageEXT(KxDevice device, 
+    KxSwapchainEXT swapchain, 
+    uint64_t timeout, 
+    KxSemaphore semaphore, 
+    KxFence fence, 
+    uint32_t* pImageIndex);
+KxResult KX_CALL kxQueuePresentEXT(KxQueue queue, 
+    const KxPresentInfoEXT* pPresentInfo);
 KxResult KX_CALL kxDeviceWaitIdle(KxDevice);
 
 // api_renderpass.cpp
