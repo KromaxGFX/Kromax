@@ -66,6 +66,7 @@ add_library(kromax
     src/core/Device.cpp
     src/core/DeviceDispatch.cpp
     src/core/DeviceDispatchPipeline.cpp
+    src/core/DeviceDispatchDescriptor.cpp
     src/core/Queue.h
     src/core/Queue.cpp
 

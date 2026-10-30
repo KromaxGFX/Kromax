@@ -124,6 +124,38 @@ struct DeviceDispatch {
         const KxAllocationCallbacks*, KxPipeline*);
     void (KX_CALL* destroy_pipeline)(
         KxDevice, KxPipeline, const KxAllocationCallbacks*);
+
+    // Descriptor set layout
+    KxResult (KX_CALL* create_descriptor_set_layout)(
+        KxDevice, const KxDescriptorSetLayoutCreateInfo*,
+        const KxAllocationCallbacks*, KxDescriptorSetLayout*);
+    void (KX_CALL* destroy_descriptor_set_layout)(
+        KxDevice, KxDescriptorSetLayout, const KxAllocationCallbacks*);
+
+    // Descriptor pool
+    KxResult (KX_CALL* create_descriptor_pool)(
+        KxDevice, const KxDescriptorPoolCreateInfo*,
+        const KxAllocationCallbacks*, KxDescriptorPool*);
+    void (KX_CALL* destroy_descriptor_pool)(
+        KxDevice, KxDescriptorPool, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* reset_descriptor_pool)(
+        KxDevice, KxDescriptorPool, KxDescriptorPoolResetFlags);
+
+    // Descriptor set
+    KxResult (KX_CALL* allocate_descriptor_sets)(
+        KxDevice, const KxDescriptorSetAllocateInfo*, KxDescriptorSet*);
+    KxResult (KX_CALL* free_descriptor_sets)(
+        KxDevice, KxDescriptorPool, uint32_t, const KxDescriptorSet*);
+    void (KX_CALL* update_descriptor_sets)(
+        KxDevice, uint32_t, const KxWriteDescriptorSet*,
+        uint32_t, const KxCopyDescriptorSet*);
+
+    // Sampler
+    KxResult (KX_CALL* create_sampler)(
+        KxDevice, const KxSamplerCreateInfo*,
+        const KxAllocationCallbacks*, KxSampler*);
+    void (KX_CALL* destroy_sampler)(
+        KxDevice, KxSampler, const KxAllocationCallbacks*);
 };
 
 /* -----------------------------------------------------------------------
