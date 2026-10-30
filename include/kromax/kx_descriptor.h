@@ -147,6 +147,20 @@ typedef struct KxSamplerCreateInfo {
     KxBool32 unnormalizedCoordinates;
 } KxSamplerCreateInfo;
 
+/* =======================================================================
+ * Bound texture (resolved descriptor)
+ * ======================================================================= */
+
+typedef struct KxBoundTexture {
+    KxSampler sampler;
+    KxImageView imageView;
+    uint32_t width;
+    uint32_t height;
+    uint32_t rowPitch;
+    KxFormat format;
+    const void* pTexels;
+} KxBoundTexture;
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

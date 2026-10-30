@@ -65,6 +65,7 @@ add_library(kromax
     src/core/Device.h
     src/core/Device.cpp
     src/core/DeviceDispatch.cpp
+    src/core/DeviceDispatchPipeline.cpp
     src/core/Queue.h
     src/core/Queue.cpp
 
@@ -120,11 +121,13 @@ add_library(kromax
     src/driver/software/SoftwareShaderModule.cpp
     src/driver/software/SoftwareRasterizer.h
     src/driver/software/SoftwareRasterizerDraw.cpp
+    src/driver/software/SoftwareRasterizerDrawIndexed.cpp
     src/driver/software/SoftwareRasterizerVertex.cpp
     src/driver/software/SoftwareRasterizerFragment.cpp
     src/driver/software/SoftwareRasterizerTriangle.cpp
 
     src/driver/software/SoftwareCommandPool.h
+    src/driver/software/SoftwareCommandBufferCommands.h
 
     src/driver/amdgpu/AmdGpuDriver.h
 
@@ -160,6 +163,7 @@ target_sources(kromax PRIVATE
     src/core/PhysicalDevice.cpp
     src/core/Device.cpp
     src/core/DeviceDispatch.cpp
+    src/core/DeviceDispatchPipeline.cpp
     src/core/Queue.cpp
     src/api/api.cpp
     src/api/api_dispatch.cpp
@@ -196,6 +200,7 @@ target_sources(kromax PRIVATE
     src/driver/software/SoftwarePipelineLayout.cpp
     src/driver/software/SoftwareShaderModule.cpp
     src/driver/software/SoftwareRasterizerDraw.cpp
+    src/driver/software/SoftwareRasterizerDrawIndexed.cpp
     src/driver/software/SoftwareRasterizerVertex.cpp
     src/driver/software/SoftwareRasterizerFragment.cpp
     src/driver/software/SoftwareRasterizerTriangle.cpp

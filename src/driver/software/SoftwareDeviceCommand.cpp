@@ -62,6 +62,12 @@ void SoftwareDevice::execute_command(const CommandVariant& cmd) {
         } else if constexpr (std::is_same_v<T, CmdDispatch>) {
             // Dispatch - not implemented yet
             (void)arg;
+        } else if constexpr (std::is_same_v<T, CmdBeginRenderPass>) {
+            execute_begin_render_pass(arg);
+        } else if constexpr (std::is_same_v<T, CmdEndRenderPass>) {
+            execute_end_render_pass(arg);
+        } else if constexpr (std::is_same_v<T, CmdNextSubpass>) {
+            execute_next_subpass(arg);
         }
     }, cmd);
 }

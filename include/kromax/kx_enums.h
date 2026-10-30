@@ -319,6 +319,17 @@ typedef enum KxDescriptorType {
 } KxDescriptorType;
 
 /* =======================================================================
+ * Shader stage flags
+ * ======================================================================= */
+
+typedef uint32_t KxShaderStageFlags;
+#define KX_SHADER_STAGE_VERTEX_BIT   0x00000001u
+#define KX_SHADER_STAGE_FRAGMENT_BIT 0x00000002u
+#define KX_SHADER_STAGE_COMPUTE_BIT  0x00000004u
+#define KX_SHADER_STAGE_ALL_GRAPHICS 0x0000001Fu
+#define KX_SHADER_STAGE_ALL          0x7FFFFFFFu
+
+/* =======================================================================
  * Pipeline Stage / Access / Dependency flags
  * ======================================================================= */
 

@@ -59,8 +59,7 @@ public:
     KxRenderPass register_render_pass(std::unique_ptr<SoftwareRenderPass> rp);
     KxFramebuffer register_framebuffer(std::unique_ptr<SoftwareFramebuffer> fb);
     KxCommandPool register_command_pool(std::unique_ptr<SoftwareCommandPool> pool);
-    KxCommandBuffer register_command_buffer(
-        std::unique_ptr<SoftwareCommandBuffer> cmd);
+    KxCommandBuffer register_command_buffer(std::unique_ptr<SoftwareCommandBuffer> cmd);
     KxPipelineLayout register_pipeline_layout(std::unique_ptr<SoftwarePipelineLayout> layout);
     KxPipeline register_pipeline(std::unique_ptr<SoftwarePipeline> pipeline);
     KxShaderModule register_shader_module(std::unique_ptr<SoftwareShaderModule> module);
@@ -78,101 +77,41 @@ public:
     void unregister_shader_module(KxShaderModule module);
 
     /* IDriverDevice */
-    KxResult allocate_memory(
-        const KxMemoryAllocateInfo* allocate_info,
-        const KxAllocationCallbacks* allocator,
-        KxDeviceMemory* memory) override;
-    void free_memory(KxDeviceMemory memory,
-                     const KxAllocationCallbacks* allocator) override;
-    KxResult create_buffer(
-        const KxBufferCreateInfo* create_info,
-        const KxAllocationCallbacks* allocator,
-        KxBuffer* buffer) override;
-    void destroy_buffer(KxBuffer buffer,
-                        const KxAllocationCallbacks* allocator) override;
-    KxResult create_image(
-        const KxImageCreateInfo* create_info,
-        const KxAllocationCallbacks* allocator,
-        KxImage* image) override;
-    void destroy_image(KxImage image,
-                       const KxAllocationCallbacks* allocator) override;
-    KxResult create_image_view(
-        const KxImageViewCreateInfo* create_info,
-        const KxAllocationCallbacks* allocator,
-        KxImageView* image_view) override;
-    void destroy_image_view(KxImageView image_view,
-                            const KxAllocationCallbacks* allocator) override;
-    KxResult create_render_pass(
-        const KxRenderPassCreateInfo* create_info,
-        const KxAllocationCallbacks* allocator,
-        KxRenderPass* render_pass) override;
-    void destroy_render_pass(KxRenderPass render_pass,
-                             const KxAllocationCallbacks* allocator) override;
-    KxResult create_framebuffer(
-        const KxFramebufferCreateInfo* create_info,
-        const KxAllocationCallbacks* allocator,
-        KxFramebuffer* framebuffer) override;
-    void destroy_framebuffer(KxFramebuffer framebuffer,
-                             const KxAllocationCallbacks* allocator) override;
-    KxResult create_command_pool(
-        const KxCommandPoolCreateInfo* create_info,
-        const KxAllocationCallbacks* allocator,
-        KxCommandPool* command_pool) override;
-    void destroy_command_pool(KxCommandPool command_pool,
-                              const KxAllocationCallbacks* allocator) override;
-    KxResult allocate_command_buffers(
-        const KxCommandBufferAllocateInfo* allocate_info,
-        KxCommandBuffer* command_buffers) override;
-    void free_command_buffers(KxCommandPool command_pool,
-                              uint32_t count,
-                              const KxCommandBuffer* command_buffers) override;
-    KxResult begin_command_buffer(
-        KxCommandBuffer command_buffer,
-        const KxCommandBufferBeginInfo* begin_info) override;
-    KxResult end_command_buffer(KxCommandBuffer command_buffer) override;
-    KxResult queue_submit(uint32_t submit_count,
-                          const KxSubmitInfo* submits,
-                          KxFence fence) override;
+    KxResult allocate_memory(const KxMemoryAllocateInfo*, const KxAllocationCallbacks*, KxDeviceMemory*) override;
+    void free_memory(KxDeviceMemory, const KxAllocationCallbacks*) override;
+    KxResult create_buffer(const KxBufferCreateInfo*, const KxAllocationCallbacks*, KxBuffer*) override;
+    void destroy_buffer(KxBuffer, const KxAllocationCallbacks*) override;
+    KxResult create_image(const KxImageCreateInfo*, const KxAllocationCallbacks*, KxImage*) override;
+    void destroy_image(KxImage, const KxAllocationCallbacks*) override;
+    KxResult create_image_view(const KxImageViewCreateInfo*, const KxAllocationCallbacks*, KxImageView*) override;
+    void destroy_image_view(KxImageView, const KxAllocationCallbacks*) override;
+    KxResult create_render_pass(const KxRenderPassCreateInfo*, const KxAllocationCallbacks*, KxRenderPass*) override;
+    void destroy_render_pass(KxRenderPass, const KxAllocationCallbacks*) override;
+    KxResult create_framebuffer(const KxFramebufferCreateInfo*, const KxAllocationCallbacks*, KxFramebuffer*) override;
+    void destroy_framebuffer(KxFramebuffer, const KxAllocationCallbacks*) override;
+    KxResult create_command_pool(const KxCommandPoolCreateInfo*, const KxAllocationCallbacks*, KxCommandPool*) override;
+    void destroy_command_pool(KxCommandPool, const KxAllocationCallbacks*) override;
+    KxResult allocate_command_buffers(const KxCommandBufferAllocateInfo*, KxCommandBuffer*) override;
+    void free_command_buffers(KxCommandPool, uint32_t, const KxCommandBuffer*) override;
+    KxResult begin_command_buffer(KxCommandBuffer, const KxCommandBufferBeginInfo*) override;
+    KxResult end_command_buffer(KxCommandBuffer) override;
+    KxResult queue_submit(uint32_t, const KxSubmitInfo*, KxFence) override;
     KxResult queue_wait_idle() override;
     KxResult device_wait_idle() override;
-    KxResult bind_buffer_memory(
-        KxBuffer buffer,
-        KxDeviceMemory memory,
-        uint64_t memory_offset) override;
-    KxResult bind_image_memory(
-        KxImage image,
-        KxDeviceMemory memory,
-        uint64_t memory_offset) override;
-    KxResult map_memory(
-        KxDeviceMemory memory,
-        uint64_t offset,
-        uint64_t size,
-        KxMemoryMapFlags flags,
-        void** pp_data) override;
-    void unmap_memory(
-        KxDeviceMemory memory) override;
+    KxResult bind_buffer_memory(KxBuffer, KxDeviceMemory, uint64_t) override;
+    KxResult bind_image_memory(KxImage, KxDeviceMemory, uint64_t) override;
+    KxResult map_memory(KxDeviceMemory, uint64_t, uint64_t, KxMemoryMapFlags, void**) override;
+    void unmap_memory(KxDeviceMemory) override;
 
     /* Pipeline */
-    KxResult create_pipeline_layout(
-        const KxPipelineLayoutCreateInfo* create_info,
-        const KxAllocationCallbacks* allocator,
-        KxPipelineLayout* pipeline_layout) override;
-    void destroy_pipeline_layout(KxPipelineLayout pipeline_layout,
-                                 const KxAllocationCallbacks* allocator) override;
-    KxResult create_pipeline(
-        const KxPipelineCreateInfo* create_info,
-        const KxAllocationCallbacks* allocator,
-        KxPipeline* pipeline) override;
-    void destroy_pipeline(KxPipeline pipeline,
-                          const KxAllocationCallbacks* allocator) override;
+    KxResult create_pipeline_layout(const KxPipelineLayoutCreateInfo*, const KxAllocationCallbacks*, KxPipelineLayout*) override;
+    void destroy_pipeline_layout(KxPipelineLayout, const KxAllocationCallbacks*) override;
+    KxResult create_pipeline(const KxPipelineCreateInfo*, const KxAllocationCallbacks*, KxPipeline*) override;
+    void destroy_pipeline(KxPipeline, const KxAllocationCallbacks*) override;
 
     /* Shader module */
-    KxResult create_shader_module(
-        const KxShaderModuleCreateInfo* create_info,
-        const KxAllocationCallbacks* allocator,
-        KxShaderModule* shader_module) override;
-    void destroy_shader_module(KxShaderModule shader_module,
-                               const KxAllocationCallbacks* allocator) override;
+    KxResult create_shader_module(const KxShaderModuleCreateInfo*, const KxAllocationCallbacks*, KxShaderModule*) override;
+    void destroy_shader_module(KxShaderModule, const KxAllocationCallbacks*) override;
 
 private:
     PhysicalDevice* physical_device_;

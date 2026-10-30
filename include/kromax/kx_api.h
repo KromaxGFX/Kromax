@@ -319,6 +319,16 @@ KX_API void KX_CALL kxDestroySampler(
     const KxAllocationCallbacks* pAllocator);
 
 /* =======================================================================
+ * Texture sampling
+ * ======================================================================= */
+
+KX_API KxResult KX_CALL kxSampleTexture(
+    const KxBoundTexture* pTexture,
+    float u,
+    float v,
+    float outColor[4]);
+
+/* =======================================================================
  * Render Pass functions
  * ======================================================================= */
 

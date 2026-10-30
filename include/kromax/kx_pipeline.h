@@ -4,21 +4,11 @@
 #include "kx_types.h"
 #include "kx_enums.h"
 #include "kx_structs.h"
+#include "kx_descriptor.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-/* =======================================================================
- * Shader stage flags
- * ======================================================================= */
-
-typedef uint32_t KxShaderStageFlags;
-#define KX_SHADER_STAGE_VERTEX_BIT   0x00000001u
-#define KX_SHADER_STAGE_FRAGMENT_BIT 0x00000002u
-#define KX_SHADER_STAGE_COMPUTE_BIT  0x00000004u
-#define KX_SHADER_STAGE_ALL_GRAPHICS 0x0000001Fu
-#define KX_SHADER_STAGE_ALL          0x7FFFFFFFu
 
 /* =======================================================================
  * Pipeline create flags
@@ -69,6 +59,8 @@ typedef struct KxFragmentInput {
     float normal[3];            /* interpolated normal */
     float texcoord[2];          /* interpolated texcoord */
     float color[4];             /* interpolated color */
+    uint32_t boundTextureCount; /* number of bound sampled textures */
+    const KxBoundTexture* pBoundTextures; /* resolved sampled textures */
 } KxFragmentInput;
 
 typedef struct KxFragmentOutput {

@@ -1,0 +1,148 @@
+/*
+ * SoftwareRasterizerDrawIndexed.cpp
+ *
+ * Indexed draw entry point.
+ */
+
+#include "SoftwareRasterizer.h"
+
+#include "SoftwareDevice.h"
+#include "SoftwarePipeline.h"
+#include "SoftwareImage.h"
+#include "SoftwareCommandBuffer.h"
+
+namespace kx {
+
+void SoftwareRasterizer::draw_indexed(SoftwareDevice* device,
+                                      SoftwarePipeline* pipeline,
+                                      const CmdBindVertexBuffers& vertex_buffers,
+                                      const CmdBindIndexBuffer& index_buffer,
+                                      uint32_t index_count,
+                                      uint32_t instance_count,
+                                      uint32_t first_index,
+                                      int32_t vertex_offset,
+                                      uint32_t first_instance,
+                                      SoftwareImage* color_attachment,
+                                      SoftwareImage* depth_attachment) {
+    if (!pipeline || !color_attachment || index_count == 0 || !index_buffer.buffer) return;
+
+    // Get framebuffer dimensions
+    uint32_t width = color_attachment->width();
+    uint32_t height = color_attachment->height();
+
+    const void* push_constants = nullptr;
+    if (pipeline->pipeline_layout() && pipeline->vertex_shader()) {
+        push_constants = pipeline->vertex_shader()->push_constants;
+    }
+
+    // Get index buffer data
+    const uint8_t* index_data = index_buffer.buffer->mapped_ptr() + index_buffer.offset;
+    if (!index_data) return;
+
+    // Process each instance
+    for (uint32_t instance = 0; instance < instance_count; ++instance) {
+        uint32_t instance_index = first_instance + instance;
+
+        // Process indices in groups of 3 (triangles)
+        for (uint32_t idx = 0; idx + 2 < index_count; idx += 3) {
+            VertexAttributeFetcher fetcher{pipeline, vertex_buffers, &index_buffer};
+
+            // Read indices
+            uint32_t indices[3];
+            if (index_buffer.index_type == KX_INDEX_TYPE_UINT16) {
+                const uint16_t* idx16 = reinterpret_cast<const uint16_t*>(index_data);
+                indices[0] = idx16[first_index + idx + 0];
+                indices[1] = idx16[first_index + idx + 1];
+                indices[2] = idx16[first_index + idx + 2];
+            } else {
+                const uint32_t* idx32 = reinterpret_cast<const uint32_t*>(index_data);
+                indices[0] = idx32[first_index + idx + 0];
+                indices[1] = idx32[first_index + idx + 1];
+                indices[2] = idx32[first_index + idx + 2];
+            }
+
+            // Apply vertex offset
+            uint32_t vertex_indices[3] = {
+                indices[0] + static_cast<uint32_t>(vertex_offset),
+                indices[1] + static_cast<uint32_t>(vertex_offset),
+                indices[2] + static_cast<uint32_t>(vertex_offset)
+            };
+
+            // Fetch attributes for 3 vertices
+            KxVertexInput vi[3];
+            fetcher.fetch_attributes(vertex_indices[0], instance_index, vi[0]);
+            fetcher.fetch_attributes(vertex_indices[1], instance_index, vi[1]);
+            fetcher.fetch_attributes(vertex_indices[2], instance_index, vi[2]);
+
+            // Run vertex shader for each vertex
+            Vertex vs_out[3];
+            for (int i = 0; i < 3; ++i) {
+                vs_out[i] = run_vertex_shader(pipeline->vertex_shader(), vi[i], push_constants);
+                
+                // If no vertex shader, use pass-through
+                if (!pipeline->vertex_shader() || !pipeline->vertex_shader()->vertex_callback) {
+                    if (vi[i].position) {
+                        vs_out[i].position[0] = vi[i].position[0];
+                        vs_out[i].position[1] = vi[i].position[1];
+                        vs_out[i].position[2] = vi[i].position[2] ? vi[i].position[2] : 0.0f;
+                        vs_out[i].position[3] = vi[i].position[3] ? vi[i].position[3] : 1.0f;
+                    } else {
+                        vs_out[i].position[0] = 0.0f;
+                        vs_out[i].position[1] = 0.0f;
+                        vs_out[i].position[2] = 0.0f;
+                        vs_out[i].position[3] = 1.0f;
+                    }
+                    if (vi[i].normal) {
+                        vs_out[i].normal[0] = vi[i].normal[0];
+                        vs_out[i].normal[1] = vi[i].normal[1];
+                        vs_out[i].normal[2] = vi[i].normal[2];
+                    } else {
+                        vs_out[i].normal[0] = 0.0f;
+                        vs_out[i].normal[1] = 0.0f;
+                        vs_out[i].normal[2] = 1.0f;
+                    }
+                    if (vi[i].texcoord) {
+                        vs_out[i].texcoord[0] = vi[i].texcoord[0];
+                        vs_out[i].texcoord[1] = vi[i].texcoord[1];
+                    } else {
+                        vs_out[i].texcoord[0] = 0.0f;
+                        vs_out[i].texcoord[1] = 0.0f;
+                    }
+                    if (vi[i].color) {
+                        vs_out[i].color[0] = vi[i].color[0];
+                        vs_out[i].color[1] = vi[i].color[1];
+                        vs_out[i].color[2] = vi[i].color[2];
+                        vs_out[i].color[3] = vi[i].color[3];
+                    } else {
+                        vs_out[i].color[0] = 1.0f;
+                        vs_out[i].color[1] = 1.0f;
+                        vs_out[i].color[2] = 1.0f;
+                        vs_out[i].color[3] = 1.0f;
+                    }
+                }
+            }
+
+            // Perspective divide
+            perspective_divide(vs_out, 3);
+
+            // Viewport transform
+            viewport_transform(vs_out, 3, width, height, pipeline);
+
+            // Backface culling
+            bool is_front_facing;
+            if (backface_cull(vs_out[0], vs_out[1], vs_out[2], pipeline, is_front_facing)) {
+                continue;
+            }
+
+            // Rasterize
+            std::vector<Fragment> fragments;
+            rasterize_triangle(vs_out[0], vs_out[1], vs_out[2], width, height, fragments);
+
+            // Process fragments
+            process_fragments(fragments, width, height, color_attachment, depth_attachment,
+                             pipeline, is_front_facing, push_constants);
+        }
+    }
+}
+
+} /* namespace kx */
