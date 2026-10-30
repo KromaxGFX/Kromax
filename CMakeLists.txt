@@ -76,7 +76,9 @@ add_library(kromax
     src/api/api_device.cpp
     src/api/api_memory.cpp
     src/api/api_command.cpp
-    src/api/api_display.cpp
+    src/api/api_display_core.cpp
+    src/api/api_display_swapchain.cpp
+    
     src/api/api_renderpass.cpp
     src/api/api_pipeline_create.cpp
     src/api/api_pipeline_commands.cpp
@@ -178,7 +180,7 @@ target_sources(kromax PRIVATE
     src/api/api_device.cpp
     src/api/api_memory.cpp
     src/api/api_command.cpp
-    src/api/api_display.cpp
+    
     src/api/api_renderpass.cpp
     src/api/api_pipeline_create.cpp
     src/api/api_pipeline_commands.cpp
