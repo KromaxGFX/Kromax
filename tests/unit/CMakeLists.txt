@@ -4,6 +4,7 @@ add_executable(test_unit
     test_result.cpp
     test_allocator.cpp
     test_expected.cpp
+    test_rasterizer.cpp
 )
 target_include_directories(test_unit PRIVATE ${DOCTEST_INCLUDE_DIR})
 target_link_libraries(test_unit PRIVATE kromax)
