@@ -28,6 +28,9 @@ public:
     KxImageCreateInfo create_info() const noexcept { return create_info_; }
     uint32_t width() const noexcept { return create_info_.width; }
     uint32_t height() const noexcept { return create_info_.height; }
+    uint32_t depth() const noexcept { return create_info_.depth; }
+    uint32_t array_layers() const noexcept { return create_info_.arrayLayers; }
+    uint32_t mip_levels() const noexcept { return create_info_.mipLevels; }
     KxFormat format() const noexcept { return create_info_.format; }
     KxImageLayout layout() const noexcept { return layout_; }
     void set_layout(KxImageLayout layout) noexcept { layout_ = layout; }
@@ -43,6 +46,7 @@ public:
         return memory_ ? memory_->size() : 0;
     }
     std::size_t row_pitch() const noexcept { return row_pitch_; }
+    std::size_t slice_pitch() const noexcept { return row_pitch_ * create_info_.height; }
 
     /* Clear the whole image to a color (RGBA8) */
     void clear_color(float r, float g, float b, float a);

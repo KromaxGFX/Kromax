@@ -64,11 +64,20 @@ add_library(kromax
     src/core/PhysicalDevice.cpp
     src/core/Device.h
     src/core/Device.cpp
+    src/core/DeviceDispatch.cpp
     src/core/Queue.h
     src/core/Queue.cpp
 
     src/api/api.cpp
     src/api/api_dispatch.cpp
+    src/api/api_instance.cpp
+    src/api/api_device.cpp
+    src/api/api_memory.cpp
+    src/api/api_command.cpp
+    src/api/api_renderpass.cpp
+    src/api/api_pipeline_create.cpp
+    src/api/api_pipeline_commands.cpp
+    src/api/api_pipeline_utils.cpp
 
     src/driver/IDriver.h
     src/driver/IDriverDevice.h
@@ -79,16 +88,41 @@ add_library(kromax
     src/driver/software/SoftwareDriver.cpp
     src/driver/software/SoftwareDevice.h
     src/driver/software/SoftwareDevice.cpp
+    src/driver/software/SoftwareDeviceMemory.cpp
+    src/driver/software/SoftwareDeviceBuffer.cpp
+    src/driver/software/SoftwareDeviceImage.cpp
+    src/driver/software/SoftwareDeviceRenderPass.cpp
+    src/driver/software/SoftwareDeviceCommand.cpp
+    src/driver/software/SoftwareDeviceCopy.cpp
+    src/driver/software/SoftwareDeviceDraw.cpp
+    src/driver/software/SoftwareDeviceFormat.cpp
+    src/driver/software/SoftwareDeviceMethods.cpp
+    src/driver/software/SoftwareDeviceShader.cpp
     src/driver/software/SoftwareMemory.h
     src/driver/software/SoftwareMemory.cpp
     src/driver/software/SoftwareBuffer.h
     src/driver/software/SoftwareBuffer.cpp
     src/driver/software/SoftwareImage.h
     src/driver/software/SoftwareImage.cpp
+    src/driver/software/SoftwareImageView.h
+    src/driver/software/SoftwareImageView.cpp
+    src/driver/software/SoftwareRenderPass.h
+    src/driver/software/SoftwareRenderPass.cpp
+    src/driver/software/SoftwareFramebuffer.h
+    src/driver/software/SoftwareFramebuffer.cpp
     src/driver/software/SoftwareCommandBuffer.h
     src/driver/software/SoftwareCommandBuffer.cpp
     src/driver/software/SoftwarePipeline.h
     src/driver/software/SoftwarePipeline.cpp
+    src/driver/software/SoftwarePipelineLayout.h
+    src/driver/software/SoftwarePipelineLayout.cpp
+    src/driver/software/SoftwareShaderModule.h
+    src/driver/software/SoftwareShaderModule.cpp
+    src/driver/software/SoftwareRasterizer.h
+    src/driver/software/SoftwareRasterizerDraw.cpp
+    src/driver/software/SoftwareRasterizerVertex.cpp
+    src/driver/software/SoftwareRasterizerFragment.cpp
+    src/driver/software/SoftwareRasterizerTriangle.cpp
 
     src/driver/software/SoftwareCommandPool.h
 
@@ -125,17 +159,46 @@ target_sources(kromax PRIVATE
     src/core/Instance.cpp
     src/core/PhysicalDevice.cpp
     src/core/Device.cpp
+    src/core/DeviceDispatch.cpp
     src/core/Queue.cpp
     src/api/api.cpp
     src/api/api_dispatch.cpp
+    src/api/api_instance.cpp
+    src/api/api_device.cpp
+    src/api/api_memory.cpp
+    src/api/api_command.cpp
+    src/api/api_renderpass.cpp
+    src/api/api_pipeline_create.cpp
+    src/api/api_pipeline_commands.cpp
+    src/api/api_pipeline_utils.cpp
     src/driver/DriverRegistry.cpp
     src/driver/software/SoftwareDriver.cpp
     src/driver/software/SoftwareDevice.cpp
+    src/driver/software/SoftwareDeviceMemory.cpp
+    src/driver/software/SoftwareDeviceBuffer.cpp
+    src/driver/software/SoftwareDeviceImage.cpp
+    src/driver/software/SoftwareDeviceRenderPass.cpp
+    src/driver/software/SoftwareDeviceCommand.cpp
+    src/driver/software/SoftwareDeviceCopy.cpp
+    src/driver/software/SoftwareDeviceDraw.cpp
+    src/driver/software/SoftwareDeviceFormat.cpp
+    src/driver/software/SoftwareDeviceMethods.cpp
+    src/driver/software/SoftwareDeviceShader.cpp
+    src/driver/software/SoftwareDevicePipeline.cpp
     src/driver/software/SoftwareMemory.cpp
     src/driver/software/SoftwareBuffer.cpp
     src/driver/software/SoftwareImage.cpp
+    src/driver/software/SoftwareImageView.cpp
+    src/driver/software/SoftwareRenderPass.cpp
+    src/driver/software/SoftwareFramebuffer.cpp
     src/driver/software/SoftwareCommandBuffer.cpp
     src/driver/software/SoftwarePipeline.cpp
+    src/driver/software/SoftwarePipelineLayout.cpp
+    src/driver/software/SoftwareShaderModule.cpp
+    src/driver/software/SoftwareRasterizerDraw.cpp
+    src/driver/software/SoftwareRasterizerVertex.cpp
+    src/driver/software/SoftwareRasterizerFragment.cpp
+    src/driver/software/SoftwareRasterizerTriangle.cpp
     src/display/offscreen/OffscreenBackend.cpp
     src/display/kms/KmsBackend.cpp
     src/layers/ValidationLayer.cpp

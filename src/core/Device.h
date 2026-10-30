@@ -56,6 +56,24 @@ public:
                                           KxImage* img);
     static void dispatch_destroy_image(KxDevice device, KxImage img,
                                        const KxAllocationCallbacks* alloc);
+    static KxResult dispatch_create_image_view(KxDevice device,
+                                               const KxImageViewCreateInfo* info,
+                                               const KxAllocationCallbacks* alloc,
+                                               KxImageView* view);
+    static void dispatch_destroy_image_view(KxDevice device, KxImageView view,
+                                            const KxAllocationCallbacks* alloc);
+    static KxResult dispatch_create_render_pass(KxDevice device,
+                                                const KxRenderPassCreateInfo* info,
+                                                const KxAllocationCallbacks* alloc,
+                                                KxRenderPass* rp);
+    static void dispatch_destroy_render_pass(KxDevice device, KxRenderPass rp,
+                                             const KxAllocationCallbacks* alloc);
+    static KxResult dispatch_create_framebuffer(KxDevice device,
+                                                const KxFramebufferCreateInfo* info,
+                                                const KxAllocationCallbacks* alloc,
+                                                KxFramebuffer* fb);
+    static void dispatch_destroy_framebuffer(KxDevice device, KxFramebuffer fb,
+                                             const KxAllocationCallbacks* alloc);
     static KxResult dispatch_create_command_pool(KxDevice device,
                                                  const KxCommandPoolCreateInfo* info,
                                                  const KxAllocationCallbacks* alloc,
@@ -91,7 +109,35 @@ public:
                                         void** pp_data);
     static void dispatch_unmap_memory(KxDevice device, KxDeviceMemory memory);
 
+    // Shader module
+    static KxResult dispatch_create_shader_module(KxDevice device,
+                                                  const KxShaderModuleCreateInfo* info,
+                                                  const KxAllocationCallbacks* alloc,
+                                                  KxShaderModule* module);
+    static void dispatch_destroy_shader_module(KxDevice device, KxShaderModule module,
+                                               const KxAllocationCallbacks* alloc);
+
+    // Pipeline layout
+    static KxResult dispatch_create_pipeline_layout(KxDevice device,
+                                                    const KxPipelineLayoutCreateInfo* info,
+                                                    const KxAllocationCallbacks* alloc,
+                                                    KxPipelineLayout* layout);
+    static void dispatch_destroy_pipeline_layout(KxDevice device, KxPipelineLayout layout,
+                                                 const KxAllocationCallbacks* alloc);
+
+    // Pipeline
+    static KxResult dispatch_create_pipeline(KxDevice device,
+                                             KxPipelineCache pipelineCache,
+                                             const KxPipelineCreateInfo* info,
+                                             const KxAllocationCallbacks* alloc,
+                                             KxPipeline* pipeline);
+    static void dispatch_destroy_pipeline(KxDevice device, KxPipeline pipeline,
+                                          const KxAllocationCallbacks* alloc);
+
     SoftwareCommandBuffer* find_command_buffer(KxCommandBuffer cb) const;
+    class SoftwareImageView* find_image_view(KxImageView view) const;
+    class SoftwareRenderPass* find_render_pass(KxRenderPass rp) const;
+    class SoftwareFramebuffer* find_framebuffer(KxFramebuffer fb) const;
 
     Queue* get_queue(uint32_t family_index, uint32_t index) noexcept;
 
