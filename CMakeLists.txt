@@ -80,6 +80,7 @@ add_library(kromax
     src/api/api_pipeline_create.cpp
     src/api/api_pipeline_commands.cpp
     src/api/api_pipeline_utils.cpp
+    src/api/api_descriptor.cpp
 
     src/driver/IDriver.h
     src/driver/IDriverDevice.h
