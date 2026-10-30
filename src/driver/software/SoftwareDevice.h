@@ -159,12 +159,19 @@ private:
     void execute_next_subpass(const CmdNextSubpass& cmd);
     void execute_draw(const CmdDraw& cmd);
     void execute_draw_indexed(const CmdDrawIndexed& cmd);
+    void execute_bind_descriptor_sets(const CmdBindDescriptorSets& cmd);
     static uint32_t format_pixel_size(KxFormat format);
 
     // Current pipeline state for draw commands
     SoftwarePipeline* current_pipeline_ = nullptr;
     CmdBindVertexBuffers current_vertex_buffers_{};
     CmdBindIndexBuffer current_index_buffer_{};
+
+    // Current descriptor sets state
+    KxPipelineLayout current_pipeline_layout_ = nullptr;
+    KxDescriptorSet current_descriptor_sets_[16];
+    uint32_t current_first_descriptor_set_ = 0;
+    uint32_t current_descriptor_set_count_ = 0;
 
     // Current render pass state
     SoftwareRenderPass* current_render_pass_ = nullptr;

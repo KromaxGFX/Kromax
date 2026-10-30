@@ -40,6 +40,13 @@ public:
                              uint32_t first_instance);
     void record_push_constants(KxPipelineLayout layout, KxShaderStageFlags stage_flags,
                                uint32_t offset, uint32_t size, const void* values);
+    void record_bind_descriptor_sets(KxPipelineBindPoint bind_point,
+                                     KxPipelineLayout layout,
+                                     uint32_t first_set,
+                                     uint32_t descriptor_set_count,
+                                     const KxDescriptorSet* sets,
+                                     uint32_t dynamic_offset_count,
+                                     const uint32_t* dynamic_offsets);
     void record_dispatch(uint32_t gx, uint32_t gy, uint32_t gz);
 
     // Render pass commands

@@ -87,6 +87,16 @@ struct CmdPushConstants {
     std::vector<uint8_t> values;  // Stored push constant data
 };
 
+struct CmdBindDescriptorSets {
+    KxPipelineBindPoint bind_point;
+    KxPipelineLayout layout;
+    uint32_t first_set;
+    uint32_t descriptor_set_count;
+    KxDescriptorSet sets[16];  // Max 16 descriptor sets
+    uint32_t dynamic_offset_count;
+    uint32_t dynamic_offsets[16];
+};
+
 struct CmdDispatch {
     uint32_t group_x;
     uint32_t group_y;
@@ -117,6 +127,7 @@ using CommandVariant = std::variant<
     CmdBindVertexBuffers,
     CmdBindIndexBuffer,
     CmdPushConstants,
+    CmdBindDescriptorSets,
     CmdDraw,
     CmdDrawIndexed,
     CmdDispatch,

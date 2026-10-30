@@ -55,6 +55,8 @@ void SoftwareDevice::execute_command(const CommandVariant& cmd) {
                     }
                 }
             }
+        } else if constexpr (std::is_same_v<T, CmdBindDescriptorSets>) {
+            execute_bind_descriptor_sets(arg);
         } else if constexpr (std::is_same_v<T, CmdDraw>) {
             execute_draw(arg);
         } else if constexpr (std::is_same_v<T, CmdDrawIndexed>) {
@@ -126,6 +128,18 @@ KxResult SoftwareDevice::device_wait_idle() {
 KxResult SoftwareDevice::queue_wait_idle() {
     // For software driver, queue operations are synchronous
     return KX_SUCCESS;
+}
+
+void SoftwareDevice::execute_bind_descriptor_sets(const CmdBindDescriptorSets& cmd) {
+    current_pipeline_layout_ = cmd.layout;
+    current_first_descriptor_set_ = cmd.first_set;
+    current_descriptor_set_count_ = cmd.descriptor_set_count;
+    for (uint32_t i = 0; i < cmd.descriptor_set_count && i < 16; ++i) {
+        current_descriptor_sets_[cmd.first_set + i] = cmd.sets[i];
+    }
+    // Dynamic offsets not implemented yet
+    (void)cmd.dynamic_offset_count;
+    (void)cmd.dynamic_offsets;
 }
 
 } /* namespace kx */
