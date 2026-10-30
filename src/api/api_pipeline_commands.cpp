@@ -105,6 +105,24 @@ void KX_CALL kxCmdDispatch(
     (void)groupCountZ;
 }
 
+void KX_CALL kxCmdBindDescriptorSets(
+    KxCommandBuffer commandBuffer,
+    KxPipelineBindPoint pipelineBindPoint,
+    KxPipelineLayout layout,
+    uint32_t firstSet,
+    uint32_t descriptorSetCount,
+    const KxDescriptorSet* pDescriptorSets,
+    uint32_t dynamicOffsetCount,
+    const uint32_t* pDynamicOffsets) {
+    kx::Device* dev = kx::find_device_locked_by_command_buffer(commandBuffer);
+    if (!dev) return;
+    auto* cmd = dev->find_command_buffer(commandBuffer);
+    if (!cmd) return;
+    cmd->record_bind_descriptor_sets(pipelineBindPoint, layout, firstSet,
+                                     descriptorSetCount, pDescriptorSets,
+                                     dynamicOffsetCount, pDynamicOffsets);
+}
+
 /* =======================================================================
  * Commands - Copy/Clear/Barrier
  * ======================================================================= */

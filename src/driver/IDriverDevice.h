@@ -22,6 +22,10 @@ class SoftwareCommandPool;
 class SoftwarePipeline;
 class SoftwarePipelineLayout;
 class SoftwareShaderModule;
+class SoftwareDescriptorSetLayout;
+class SoftwareDescriptorPool;
+class SoftwareDescriptorSet;
+class SoftwareSampler;
 
 class IDriverDevice {
 public:
@@ -158,6 +162,50 @@ public:
         KxShaderModule shader_module,
         const KxAllocationCallbacks* allocator) = 0;
 
+    /* Descriptor set layout */
+    virtual KxResult create_descriptor_set_layout(
+        const KxDescriptorSetLayoutCreateInfo* create_info,
+        const KxAllocationCallbacks* allocator,
+        KxDescriptorSetLayout* layout) = 0;
+    virtual void destroy_descriptor_set_layout(
+        KxDescriptorSetLayout layout,
+        const KxAllocationCallbacks* allocator) = 0;
+
+    /* Descriptor pool */
+    virtual KxResult create_descriptor_pool(
+        const KxDescriptorPoolCreateInfo* create_info,
+        const KxAllocationCallbacks* allocator,
+        KxDescriptorPool* pool) = 0;
+    virtual void destroy_descriptor_pool(
+        KxDescriptorPool pool,
+        const KxAllocationCallbacks* allocator) = 0;
+    virtual KxResult reset_descriptor_pool(
+        KxDescriptorPool pool,
+        KxDescriptorPoolResetFlags flags) = 0;
+
+    /* Descriptor set */
+    virtual KxResult allocate_descriptor_sets(
+        const KxDescriptorSetAllocateInfo* allocate_info,
+        KxDescriptorSet* sets) = 0;
+    virtual KxResult free_descriptor_sets(
+        KxDescriptorPool pool,
+        uint32_t count,
+        const KxDescriptorSet* sets) = 0;
+    virtual void update_descriptor_sets(
+        uint32_t descriptor_write_count,
+        const KxWriteDescriptorSet* descriptor_writes,
+        uint32_t descriptor_copy_count,
+        const KxCopyDescriptorSet* descriptor_copies) = 0;
+
+    /* Sampler */
+    virtual KxResult create_sampler(
+        const KxSamplerCreateInfo* create_info,
+        const KxAllocationCallbacks* allocator,
+        KxSampler* sampler) = 0;
+    virtual void destroy_sampler(
+        KxSampler sampler,
+        const KxAllocationCallbacks* allocator) = 0;
+
     virtual SoftwareBuffer* find_buffer(KxBuffer buffer) = 0;
     virtual SoftwareImage* find_image(KxImage image) = 0;
     virtual SoftwareImageView* find_image_view(KxImageView view) = 0;
@@ -168,6 +216,10 @@ public:
     virtual SoftwarePipelineLayout* find_pipeline_layout(KxPipelineLayout layout) = 0;
     virtual SoftwarePipeline* find_pipeline(KxPipeline pipeline) = 0;
     virtual SoftwareShaderModule* find_shader_module(KxShaderModule module) = 0;
+    virtual SoftwareDescriptorSetLayout* find_descriptor_set_layout(KxDescriptorSetLayout layout) = 0;
+    virtual SoftwareDescriptorPool* find_descriptor_pool(KxDescriptorPool pool) = 0;
+    virtual SoftwareDescriptorSet* find_descriptor_set(KxDescriptorSet set) = 0;
+    virtual SoftwareSampler* find_sampler(KxSampler sampler) = 0;
 };
 
 } /* namespace kx */

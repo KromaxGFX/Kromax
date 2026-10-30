@@ -27,3 +27,9 @@ add_executable(test_renderpass test_renderpass.cpp)
 target_link_libraries(test_renderpass PRIVATE kromax)
 target_include_directories(test_renderpass PRIVATE ${CMAKE_SOURCE_DIR}/include)
 add_test(NAME renderpass_tests COMMAND test_renderpass)
+
+# Descriptor/Sampler tests
+add_executable(test_descriptors test_descriptors.cpp)
+target_link_libraries(test_descriptors PRIVATE kromax)
+target_include_directories(test_descriptors PRIVATE ${CMAKE_SOURCE_DIR}/include)
+add_test(NAME descriptor_tests COMMAND test_descriptors)
