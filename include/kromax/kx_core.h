@@ -11,6 +11,9 @@
  *   kx_structs.h    - Create info structures for memory, buffer, image, renderpass, etc.
  *   kx_pipeline.h   - Pipeline, shader, pipeline layout, vertex input, viewport, etc.
  *   kx_descriptor.h - Descriptor set layout, pool, sets, samplers
+ *   kx_shader.h     - Multi-language shader compilation and shader environments
+ *   kx_material.h   - Material objects (parameters, texture slots, PBR)
+ *   kx_texture.h    - Texture helpers (image info, uploads, mipmap generation)
  *   kx_api.h        - All function declarations
  */
 
@@ -19,6 +22,9 @@
 #include "kx_structs.h"
 #include "kx_pipeline.h"
 #include "kx_descriptor.h"
+#include "kx_shader.h"
+#include "kx_material.h"
+#include "kx_texture.h"
 #include "kx_api.h"
 
 #endif /* KX_CORE_H */

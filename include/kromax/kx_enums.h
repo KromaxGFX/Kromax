@@ -107,9 +107,55 @@ typedef enum KxPresentModeKHR {
 typedef enum KxShaderFormat {
     KX_SHADER_FORMAT_UNDEFINED = 0,
     KX_SHADER_FORMAT_NATIVE_CALLBACK_EXT = 1000,
+    KX_SHADER_FORMAT_SOURCE_EXT = 1001,
     KX_SHADER_FORMAT_KIR_EXT = 2000,
     KX_SHADER_FORMAT_MAX_ENUM = 0x7FFFFFFF
 } KxShaderFormat;
+
+/* =======================================================================
+ * Shader source languages
+ *
+ * Kromax accepts several shader authoring languages and lowers all of them
+ * to a single internal representation, so the same pipeline, descriptor and
+ * material code works regardless of the dialect used by the application.
+ * ======================================================================= */
+
+typedef enum KxShaderLanguage {
+    KX_SHADER_LANGUAGE_UNDEFINED = 0,
+    KX_SHADER_LANGUAGE_GLSL = 1,   /* OpenGL Shading Language        */
+    KX_SHADER_LANGUAGE_HLSL = 2,   /* High Level Shading Language    */
+    KX_SHADER_LANGUAGE_WGSL = 3,   /* WebGPU Shading Language        */
+    KX_SHADER_LANGUAGE_KXSL = 4,   /* Kromax native shading language */
+    KX_SHADER_LANGUAGE_MAX_ENUM = 0x7FFFFFFF
+} KxShaderLanguage;
+
+typedef enum KxShaderStage {
+    KX_SHADER_STAGE_VERTEX = 0,
+    KX_SHADER_STAGE_FRAGMENT = 1,
+    KX_SHADER_STAGE_COMPUTE = 2,
+    KX_SHADER_STAGE_MAX_ENUM = 0x7FFFFFFF
+} KxShaderStage;
+
+typedef enum KxShaderSeverity {
+    KX_SHADER_SEVERITY_INFO = 0,
+    KX_SHADER_SEVERITY_WARNING = 1,
+    KX_SHADER_SEVERITY_ERROR = 2,
+    KX_SHADER_SEVERITY_MAX_ENUM = 0x7FFFFFFF
+} KxShaderSeverity;
+
+/* =======================================================================
+ * Material texture slots
+ * ======================================================================= */
+
+typedef enum KxMaterialTextureSlot {
+    KX_MATERIAL_TEXTURE_BASE_COLOR = 0,
+    KX_MATERIAL_TEXTURE_NORMAL = 1,
+    KX_MATERIAL_TEXTURE_METALLIC_ROUGHNESS = 2,
+    KX_MATERIAL_TEXTURE_EMISSIVE = 3,
+    KX_MATERIAL_TEXTURE_OCCLUSION = 4,
+    KX_MATERIAL_TEXTURE_HEIGHT = 5,
+    KX_MATERIAL_TEXTURE_MAX_ENUM = 0x7FFFFFFF
+} KxMaterialTextureSlot;
 
 typedef enum KxPrimitiveTopology {
     KX_PRIMITIVE_TOPOLOGY_POINT_LIST = 0,

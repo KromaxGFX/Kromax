@@ -4,14 +4,18 @@
 /*
  * SoftwareShaderModule.h
  *
- * Software shader module: holds native callback functions or SPIR-V bytecode.
+ * Software shader module: holds native callback functions, compiled IR
+ * from GLSL/HLSL/WGSL/KXSL, and the interpreter state.
  */
 
 #include <cstdint>
 #include <cstring>
+#include <memory>
 #include <vector>
 
 #include "kx_core.h"
+#include "../shader/ShaderIR.h"
+#include "../shader/ShaderInterpreter.h"
 
 namespace kx {
 
@@ -66,6 +70,15 @@ public:
         compute_callback = native_info->compute_fn;
         push_constants = native_info->push_constants;
         push_constants_size = native_info->push_constants_size;
+    }
+
+    // Compiled IR and interpreter (for KX_SHADER_FORMAT_SOURCE_EXT)
+    std::unique_ptr<shader::ShaderProgram> program;
+    std::unique_ptr<shader::Interpreter> interpreter;
+
+    bool has_ir() const noexcept { return program != nullptr; }
+    KxShaderStage stage() const noexcept {
+        return program ? program->stage : KX_SHADER_STAGE_VERTEX;
     }
 
 private:

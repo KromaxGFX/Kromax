@@ -67,6 +67,8 @@ add_library(kromax
     src/core/DeviceDispatch.cpp
     src/core/DeviceDispatchPipeline.cpp
     src/core/DeviceDispatchDescriptor.cpp
+    src/core/DeviceDispatchShader.cpp
+    src/core/DeviceDispatchShader.cpp
     src/core/Queue.h
     src/core/Queue.cpp
 
@@ -84,6 +86,7 @@ add_library(kromax
     src/api/api_pipeline_commands.cpp
     src/api/api_pipeline_utils.cpp
     src/api/api_descriptor.cpp
+    src/api/api_shader.cpp
 
     src/driver/IDriver.h
     src/driver/IDriverDevice.h
@@ -138,6 +141,19 @@ add_library(kromax
     src/driver/software/SoftwareDescriptorSet.h
     src/driver/software/SoftwareSampler.h
 
+    src/shader/ShaderTypes.h
+    src/shader/ShaderIR.h
+    src/shader/ShaderDiagnostics.h
+    src/shader/ShaderLexer.h
+    src/shader/ShaderLexer.cpp
+    src/shader/ShaderPreprocessor.cpp
+    src/shader/ShaderParser.h
+    src/shader/ShaderParser.cpp
+    src/shader/ShaderCompiler.h
+    src/shader/ShaderCompiler.cpp
+    src/shader/ShaderInterpreter.h
+    src/shader/ShaderInterpreter.cpp
+
     src/driver/amdgpu/AmdGpuDriver.h
 
     src/display/IDisplayBackend.h
@@ -164,6 +180,10 @@ target_include_directories(kromax PRIVATE
     src/layers
     include/kromax
 )
+
+# The library is built as a static archive by default; consumers must not
+# assume __declspec(dllimport) on Windows in that configuration.
+target_compile_definitions(kromax PUBLIC KX_STATIC_LIB)
 
 # Internal C++ sources (compiled as C++20 by extension)
 target_sources(kromax PRIVATE
@@ -210,6 +230,13 @@ target_sources(kromax PRIVATE
     src/driver/software/SoftwarePipelineLayout.cpp
     src/driver/software/SoftwareShaderModule.cpp
     src/driver/software/SoftwareDescriptorSet.cpp
+    src/shader/ShaderLexer.cpp
+    src/shader/ShaderPreprocessor.cpp
+    src/shader/ShaderParser.cpp
+    src/shader/ShaderCompiler.cpp
+    src/shader/ShaderInterpreter.cpp
+    src/shader/ShaderTypes.cpp
+    src/shader/ShaderIR.cpp
     src/driver/software/SoftwareRasterizerDraw.cpp
     src/driver/software/SoftwareRasterizerDrawIndexed.cpp
     src/driver/software/SoftwareRasterizerVertex.cpp

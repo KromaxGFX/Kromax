@@ -12,6 +12,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <cstring>
 #include <new>
 #include <type_traits>
 #include <utility>
@@ -19,6 +20,62 @@
 #include "kx_core.h"
 
 namespace kx {
+
+/* Portable aligned allocation.
+ *
+ * Neither std::aligned_alloc nor posix_memalign is available on every
+ * supported toolchain, so allocations always go through a small header that
+ * records the owning base pointer and the payload size. The header sits
+ * immediately before the aligned payload, which keeps the payload pointer
+ * suitable for std::vector / std::string and for direct byte access.
+ *
+ * Layout:  [ magic ][ base ptr ][ payload size ][ ... padding ... ][ payload ]
+ */
+namespace alloc_detail {
+
+inline constexpr std::uintptr_t kAllocMagic = 0x4B58414C4F434D47ull;
+
+inline void* aligned_allocate(std::size_t size, std::size_t alignment) {
+    if (size == 0) return nullptr;
+    if (alignment < alignof(void*)) alignment = alignof(void*);
+
+    constexpr std::size_t kHeaderSize = sizeof(std::uintptr_t) * 3;
+    const std::size_t total = kHeaderSize + size + alignment;
+    void* base = std::malloc(total);
+    if (!base) return nullptr;
+
+    auto address = reinterpret_cast<std::uintptr_t>(base) + kHeaderSize;
+    address = (address + alignment - 1) & ~static_cast<std::uintptr_t>(alignment - 1);
+    auto* aligned = reinterpret_cast<void*>(address);
+
+    auto* magic = reinterpret_cast<std::uintptr_t*>(aligned) - 3;
+    auto* owner = reinterpret_cast<void**>(aligned) - 2;
+    auto* payload_size = reinterpret_cast<std::size_t*>(aligned) - 1;
+    *magic = kAllocMagic;
+    *owner = base;
+    *payload_size = size;
+    return aligned;
+}
+
+inline void aligned_free(void* ptr) noexcept {
+    if (!ptr) return;
+    auto* magic = reinterpret_cast<std::uintptr_t*>(ptr) - 3;
+    if (*magic == kAllocMagic) {
+        auto* owner = reinterpret_cast<void**>(ptr) - 2;
+        std::free(*owner);
+        return;
+    }
+    std::free(ptr);
+}
+
+inline std::size_t payload_size(void* ptr) noexcept {
+    if (!ptr) return 0;
+    auto* magic = reinterpret_cast<std::uintptr_t*>(ptr) - 3;
+    if (*magic != kAllocMagic) return 0;
+    return *reinterpret_cast<std::size_t*>(ptr) - 1;
+}
+
+} /* namespace alloc_detail */
 
 class AllocatorCallbacks {
 public:
@@ -35,15 +92,8 @@ public:
                 cb_->pUserData, size, alignment,
                 KX_SYSTEM_ALLOCATION_SCOPE_OBJECT);
         }
-        // Fallback: aligned allocation via standard C library
-        if (alignment <= __alignof__(std::max_align_t)) {
-            return std::malloc(size);
-        }
-        void* ptr = nullptr;
-        if (::posix_memalign(&ptr, alignment, size) != 0) {
-            return nullptr;
-        }
-        return ptr;
+        // Fallback: aligned allocation via the portable helper
+        return alloc_detail::aligned_allocate(size, alignment);
     }
 
     void deallocate(void* ptr) noexcept {
@@ -51,7 +101,7 @@ public:
         if (cb_ && cb_->pfnFree) {
             cb_->pfnFree(cb_->pUserData, ptr);
         } else {
-            std::free(ptr);
+            alloc_detail::aligned_free(ptr);
         }
     }
 
@@ -62,7 +112,16 @@ public:
                 cb_->pUserData, original, size, alignment,
                 KX_SYSTEM_ALLOCATION_SCOPE_OBJECT);
         }
-        return std::realloc(original, size);
+        if (!original) return allocate(size, alignment);
+
+        const std::size_t old_size = alloc_detail::payload_size(original);
+        void* replacement = alloc_detail::aligned_allocate(size, alignment);
+        if (!replacement) return nullptr;
+        if (old_size > 0) {
+            std::memcpy(replacement, original, old_size < size ? old_size : size);
+        }
+        alloc_detail::aligned_free(original);
+        return replacement;
     }
 
 private:

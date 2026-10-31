@@ -33,6 +33,8 @@ extern "C" {
 #if defined(KX_PLATFORM_WINDOWS)
 #  ifdef KX_BUILD_DLL
 #    define KX_API __declspec(dllexport)
+#  elif defined(KX_STATIC_LIB)
+#    define KX_API
 #  else
 #    define KX_API __declspec(dllimport)
 #  endif

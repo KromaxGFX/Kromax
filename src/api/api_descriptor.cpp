@@ -166,96 +166,192 @@ KxResult KX_CALL kxSampleTexture(
         return KX_ERROR_FEATURE_NOT_PRESENT;
     }
 
-    // Get sampler parameters (use defaults if no sampler)
-    KxFilter mag_filter = KX_FILTER_NEAREST;
-    (void)mag_filter; // Suppress unused warning for now; will be used when filtering is implemented
-    KxSamplerAddressMode address_mode_u = KX_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-    KxSamplerAddressMode address_mode_v = KX_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-
-    if (pTexture->sampler) {
-        // In a real implementation, we'd resolve the sampler handle and read its create info
-        // For software driver, sampler is a SoftwareSampler* - but from C API it's opaque
-        // We'll use defaults for now
+    // Get sampler parameters from resolved sampler state
+    KxSamplerState sampler_state = pTexture->samplerState;
+    // Default values if not set
+    if (sampler_state.magFilter == 0 && sampler_state.minFilter == 0) {
+        sampler_state.magFilter = KX_FILTER_NEAREST;
+        sampler_state.minFilter = KX_FILTER_NEAREST;
+        sampler_state.addressModeU = KX_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler_state.addressModeV = KX_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler_state.addressModeW = KX_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+        sampler_state.mipLodBias = 0.0f;
+        sampler_state.anisotropyEnable = KX_FALSE;
+        sampler_state.maxAnisotropy = 1.0f;
+        sampler_state.compareEnable = KX_FALSE;
+        sampler_state.compareOp = KX_COMPARE_OP_ALWAYS;
+        sampler_state.minLod = 0.0f;
+        sampler_state.maxLod = 1000.0f;
+        sampler_state.borderColor = KX_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+        sampler_state.unnormalizedCoordinates = KX_FALSE;
+        sampler_state.maxLodLevel = 0;
+        sampler_state.srgbDecode = KX_FALSE;
     }
 
     // Clamp or wrap coordinates based on address mode
-    auto wrap_coord = [](float coord, uint32_t /*size*/, KxSamplerAddressMode mode) -> float {
+    auto wrap_coord = [](float coord, uint32_t size, KxSamplerAddressMode mode) -> float {
         if (mode == KX_SAMPLER_ADDRESS_MODE_REPEAT) {
             coord = coord - floorf(coord);
         } else if (mode == KX_SAMPLER_ADDRESS_MODE_MIRRORED_REPEAT) {
             float f = floorf(coord);
             coord = (static_cast<int>(f) % 2 == 0) ? (coord - f) : (1.0f - (coord - f));
+        } else if (mode == KX_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER) {
+            // For clamp to border, we let it go out of bounds and handle in sampling
         } else { // CLAMP_TO_EDGE, CLAMP_TO_BORDER
             coord = fmaxf(0.0f, fminf(1.0f, coord));
         }
         return coord;
     };
 
-    float u_wrapped = wrap_coord(u, pTexture->width, address_mode_u);
-    float v_wrapped = wrap_coord(v, pTexture->height, address_mode_v);
+    float u_wrapped = wrap_coord(u, pTexture->width, sampler_state.addressModeU);
+    float v_wrapped = wrap_coord(v, pTexture->height, sampler_state.addressModeV);
+
+    // Apply mip LOD bias
+    float lod = sampler_state.mipLodBias;
+    // For simplicity, we use level 0 (base level)
+    // Full mipmap support would select level based on derivatives
+
+    // Determine if we need bilinear filtering
+    bool use_bilinear = (sampler_state.minFilter == KX_FILTER_LINEAR ||
+                         sampler_state.magFilter == KX_FILTER_LINEAR);
 
     // Convert to texel coordinates
-    float tx = u_wrapped * static_cast<float>(pTexture->width);
-    float ty = v_wrapped * static_cast<float>(pTexture->height);
+    float tx, ty;
+    if (sampler_state.unnormalizedCoordinates) {
+        tx = u_wrapped;
+        ty = v_wrapped;
+    } else {
+        tx = u_wrapped * static_cast<float>(pTexture->width);
+        ty = v_wrapped * static_cast<float>(pTexture->height);
+    }
 
-    // Nearest neighbor sampling (simplified - no mipmap, no anisotropic)
-    int ix = static_cast<int>(floorf(tx));
-    int iy = static_cast<int>(floorf(ty));
+    // Sample
+    auto sample_nearest = [&](int ix, int iy) -> void {
+        // Clamp to texture bounds
+        ix = (ix < 0) ? 0 : (ix >= static_cast<int>(pTexture->width) ? pTexture->width - 1 : ix);
+        iy = (iy < 0) ? 0 : (iy >= static_cast<int>(pTexture->height) ? pTexture->height - 1 : iy);
 
-    // Clamp to texture bounds
-    ix = (ix < 0) ? 0 : (ix >= static_cast<int>(pTexture->width) ? pTexture->width - 1 : ix);
-    iy = (iy < 0) ? 0 : (iy >= static_cast<int>(pTexture->height) ? pTexture->height - 1 : iy);
+        uint32_t row_pitch = pTexture->rowPitch ? pTexture->rowPitch : pTexture->width * 4;
+        const uint8_t* texels = static_cast<const uint8_t*>(pTexture->pTexels);
+        const uint8_t* pixel = texels + iy * row_pitch + ix * 4;
 
-    // Calculate byte offset
-    uint32_t row_pitch = pTexture->rowPitch ? pTexture->rowPitch : pTexture->width * 4; // Assume 4 bytes/pixel if not set
-    const uint8_t* texels = static_cast<const uint8_t*>(pTexture->pTexels);
-    const uint8_t* pixel = texels + iy * row_pitch + ix * 4;
+        // Decode based on format
+        switch (pTexture->format) {
+            case KX_FORMAT_R8G8B8A8_UNORM:
+            case KX_FORMAT_B8G8R8A8_UNORM: {
+                outColor[0] = pixel[0] / 255.0f;
+                outColor[1] = pixel[1] / 255.0f;
+                outColor[2] = pixel[2] / 255.0f;
+                outColor[3] = pixel[3] / 255.0f;
+                break;
+            }
+            case KX_FORMAT_R8G8B8A8_SRGB:
+            case KX_FORMAT_B8G8R8A8_SRGB: {
+                float r = pixel[0] / 255.0f;
+                float g = pixel[1] / 255.0f;
+                float b = pixel[2] / 255.0f;
+                if (sampler_state.srgbDecode) {
+                    auto srgb_to_linear = [](float c) {
+                        return (c <= 0.04045f) ? (c / 12.92f) : std::powf((c + 0.055f) / 1.055f, 2.4f);
+                    };
+                    r = srgb_to_linear(r);
+                    g = srgb_to_linear(g);
+                    b = srgb_to_linear(b);
+                }
+                outColor[0] = r;
+                outColor[1] = g;
+                outColor[2] = b;
+                outColor[3] = pixel[3] / 255.0f;
+                break;
+            }
+            case KX_FORMAT_R8_UNORM: {
+                outColor[0] = pixel[0] / 255.0f;
+                outColor[1] = outColor[2] = 0.0f;
+                outColor[3] = 1.0f;
+                break;
+            }
+            case KX_FORMAT_R16_SFLOAT: {
+                const uint16_t* p16 = reinterpret_cast<const uint16_t*>(pixel);
+                outColor[0] = __builtin_bit_cast(float, static_cast<uint32_t>(p16[0]) << 16);
+                outColor[1] = outColor[2] = 0.0f;
+                outColor[3] = 1.0f;
+                break;
+            }
+            case KX_FORMAT_R32_SFLOAT: {
+                const float* pf = reinterpret_cast<const float*>(pixel);
+                outColor[0] = pf[0];
+                outColor[1] = outColor[2] = 0.0f;
+                outColor[3] = 1.0f;
+                break;
+            }
+            case KX_FORMAT_R32G32B32A32_SFLOAT: {
+                const float* pf = reinterpret_cast<const float*>(pixel);
+                outColor[0] = pf[0];
+                outColor[1] = pf[1];
+                outColor[2] = pf[2];
+                outColor[3] = pf[3];
+                break;
+            }
+            default: {
+                outColor[0] = outColor[1] = outColor[2] = outColor[3] = 0.0f;
+            }
+        }
+    };
 
-    // Decode based on format (simplified - handle common formats)
-    switch (pTexture->format) {
-        case KX_FORMAT_R8G8B8A8_UNORM:
-        case KX_FORMAT_R8G8B8A8_SRGB:
-        case KX_FORMAT_B8G8R8A8_UNORM:
-        case KX_FORMAT_B8G8R8A8_SRGB: {
-            outColor[0] = pixel[0] / 255.0f;
-            outColor[1] = pixel[1] / 255.0f;
-            outColor[2] = pixel[2] / 255.0f;
-            outColor[3] = pixel[3] / 255.0f;
-            break;
+    if (use_bilinear) {
+        // Bilinear filtering
+        float fx = tx - 0.5f;
+        float fy = ty - 0.5f;
+        int ix0 = static_cast<int>(floorf(fx));
+        int iy0 = static_cast<int>(floorf(fy));
+        int ix1 = ix0 + 1;
+        int iy1 = iy0 + 1;
+
+        float wx1 = fx - ix0;
+        float wy1 = fy - iy0;
+        float wx0 = 1.0f - wx1;
+        float wy0 = 1.0f - wy1;
+
+        float c00[4], c10[4], c01[4], c11[4];
+
+        auto sample_to_array = [&](int ix, int iy, float* out) {
+            if (ix < 0 || iy < 0 || ix >= static_cast<int>(pTexture->width) || iy >= static_cast<int>(pTexture->height)) {
+                if (sampler_state.addressModeU == KX_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER ||
+                    sampler_state.addressModeV == KX_SAMPLER_ADDRESS_MODE_CLAMP_TO_BORDER) {
+                    // Border color
+                    out[0] = out[1] = out[2] = out[3] = 0.0f;
+                } else {
+                    // Clamped - handled by wrap_coord
+                    ix = (ix < 0) ? 0 : (ix >= static_cast<int>(pTexture->width) ? pTexture->width - 1 : ix);
+                    iy = (iy < 0) ? 0 : (iy >= static_cast<int>(pTexture->height) ? pTexture->height - 1 : iy);
+                }
+            }
+            uint32_t row_pitch = pTexture->rowPitch ? pTexture->rowPitch : pTexture->width * 4;
+            const uint8_t* texels = static_cast<const uint8_t*>(pTexture->pTexels);
+            const uint8_t* pixel = texels + iy * row_pitch + ix * 4;
+
+            // Decode
+            out[0] = pixel[0] / 255.0f;
+            out[1] = pixel[1] / 255.0f;
+            out[2] = pixel[2] / 255.0f;
+            out[3] = pixel[3] / 255.0f;
+        };
+
+        sample_to_array(ix0, iy0, c00);
+        sample_to_array(ix1, iy0, c10);
+        sample_to_array(ix0, iy1, c01);
+        sample_to_array(ix1, iy1, c11);
+
+        for (int c = 0; c < 4; ++c) {
+            float v0 = c00[c] * wx0 + c10[c] * wx1;
+            float v1 = c01[c] * wx0 + c11[c] * wx1;
+            outColor[c] = v0 * wy0 + v1 * wy1;
         }
-        case KX_FORMAT_R8_UNORM: {
-            outColor[0] = pixel[0] / 255.0f;
-            outColor[1] = outColor[2] = 0.0f;
-            outColor[3] = 1.0f;
-            break;
-        }
-        case KX_FORMAT_R16_SFLOAT: {
-            const uint16_t* p16 = reinterpret_cast<const uint16_t*>(pixel);
-            outColor[0] = __builtin_bit_cast(float, static_cast<uint32_t>(p16[0]) << 16);
-            outColor[1] = outColor[2] = 0.0f;
-            outColor[3] = 1.0f;
-            break;
-        }
-        case KX_FORMAT_R32_SFLOAT: {
-            const float* pf = reinterpret_cast<const float*>(pixel);
-            outColor[0] = pf[0];
-            outColor[1] = outColor[2] = 0.0f;
-            outColor[3] = 1.0f;
-            break;
-        }
-        case KX_FORMAT_R32G32B32A32_SFLOAT: {
-            const float* pf = reinterpret_cast<const float*>(pixel);
-            outColor[0] = pf[0];
-            outColor[1] = pf[1];
-            outColor[2] = pf[2];
-            outColor[3] = pf[3];
-            break;
-        }
-        default: {
-            // Default to zero for unsupported formats
-            outColor[0] = outColor[1] = outColor[2] = outColor[3] = 0.0f;
-            return KX_ERROR_FORMAT_NOT_SUPPORTED;
-        }
+    } else {
+        // Nearest neighbor
+        int ix = static_cast<int>(floorf(tx));
+        int iy = static_cast<int>(floorf(ty));
+        sample_nearest(ix, iy);
     }
 
     return KX_SUCCESS;

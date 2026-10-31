@@ -20,6 +20,9 @@ void SoftwareRasterizer::run_fragment_shader(SoftwareShaderModule* shader,
                                              const void* push_constants) const {
     if (shader && shader->fragment_callback) {
         shader->fragment_callback(&input, output, push_constants);
+    } else if (shader && shader->has_ir() && shader->interpreter) {
+        // Run through interpreter - would need proper environment setup
+        // This is a placeholder for the full IR execution path
     }
 }
 

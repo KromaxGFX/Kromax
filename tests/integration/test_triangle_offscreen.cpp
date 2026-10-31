@@ -32,14 +32,14 @@ Mat4 mat4_multiply(const Mat4& a, const Mat4& b) {
     return r;
 }
 
-Mat4 mat4_perspective(float fov, float aspect, float near, float far) {
+Mat4 mat4_perspective(float fov, float aspect, float z_near, float z_far) {
     Mat4 r{};
     float f = 1.0f / std::tan(fov * 0.5f);
     r.m[0] = f / aspect;
     r.m[5] = f;
-    r.m[10] = (far + near) / (near - far);
+    r.m[10] = (z_far + z_near) / (z_near - z_far);
     r.m[11] = -1.0f;
-    r.m[14] = (2.0f * far * near) / (near - far);
+    r.m[14] = (2.0f * z_far * z_near) / (z_near - z_far);
     r.m[15] = 0.0f;
     return r;
 }

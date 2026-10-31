@@ -9,6 +9,8 @@
 #include "SoftwarePipeline.h"
 #include "SoftwarePipelineLayout.h"
 #include "SoftwareShaderModule.h"
+#include "../shader/ShaderCompiler.h"
+#include "../shader/ShaderDiagnostics.h"
 
 namespace kx {
 
@@ -28,13 +30,60 @@ KxResult SoftwareDevice::create_shader_module(
     auto module = std::make_unique<SoftwareShaderModule>();
     module->set_create_info(create_info);
 
-    // If native callback format, extract callbacks from pCode (which points to KxShaderModuleNativeCallbackInfo)
+    // If native callback format, extract callbacks from pCode
     if (create_info->format == KX_SHADER_FORMAT_NATIVE_CALLBACK_EXT) {
         if (create_info->pCode && create_info->codeSize >= sizeof(KxShaderModuleNativeCallbackInfo)) {
             const KxShaderModuleNativeCallbackInfo* native_info =
                 static_cast<const KxShaderModuleNativeCallbackInfo*>(create_info->pCode);
             module->set_native_callbacks(native_info);
         }
+    }
+    // If source format, compile the shader
+    else if (create_info->format == KX_SHADER_FORMAT_SOURCE_EXT) {
+        if (!create_info->pCode || create_info->codeSize == 0) {
+            return KX_ERROR_INVALID_ARGUMENT;
+        }
+
+        const char* source = static_cast<const char*>(create_info->pCode);
+        size_t source_size = create_info->codeSize == UINT32_MAX ? std::strlen(source) : create_info->codeSize;
+
+        // Use the pipeline layout to determine stage if possible
+        shader::ShaderCompiler::CompileOptions options;
+        options.entry_point = "main";
+
+        // Detect stage from the source or use vertex as default
+        if (std::strstr(source, "void main()") || std::strstr(source, "fn main(")) {
+            // Try to detect stage from attributes/qualifiers
+            if (std::strstr(source, "gl_Position") || std::strstr(source, "@builtin(position)"))
+                options.stage_hint = KX_SHADER_STAGE_VERTEX;
+            else if (std::strstr(source, "gl_FragColor") || std::strstr(source, "@builtin(frag_depth)"))
+                options.stage_hint = KX_SHADER_STAGE_FRAGMENT;
+            else if (std::strstr(source, "numthreads") || std::strstr(source, "@builtin(global_invocation_id)"))
+                options.stage_hint = KX_SHADER_STAGE_COMPUTE;
+            else
+                options.stage_hint = KX_SHADER_STAGE_VERTEX;
+        }
+
+        shader::DiagnosticList diagnostics;
+        shader::ShaderCompiler compiler(diagnostics);
+
+        // Set up include resolver if needed (for now, no external includes)
+        compiler.set_include_resolver([](const std::string&, std::string&) -> bool {
+            return false;
+        });
+
+        // Define common macros
+        compiler.define("KX_SOFTWARE_DRIVER", "1");
+
+        shader::ShaderProgram program = compiler.compile(std::string(source, source_size), &options);
+
+        if (diagnostics.has_errors()) {
+            // Could return error info via a future extension
+            return KX_ERROR_VALIDATION_FAILED_EXT;
+        }
+
+        module->program = std::make_unique<shader::ShaderProgram>(std::move(program));
+        module->interpreter = std::make_unique<shader::Interpreter>(*module->program);
     }
 
     *shader_module = register_shader_module(std::move(module));

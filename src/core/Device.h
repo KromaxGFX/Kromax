@@ -154,6 +154,80 @@ public:
     static void dispatch_destroy_shader_module(KxDevice device, KxShaderModule module,
                                                const KxAllocationCallbacks* alloc);
 
+    // Shader from source
+    static KxResult dispatch_create_shader_module_from_source(KxDevice device,
+                                                              const KxShaderSourceCreateInfo* info,
+                                                              const KxAllocationCallbacks* alloc,
+                                                              KxShaderModule* module);
+
+    // Shader environment
+    static KxResult dispatch_create_shader_environment(KxDevice device,
+                                                        const KxAllocationCallbacks* alloc,
+                                                        KxShaderEnvironment* env);
+    static void dispatch_destroy_shader_environment(KxDevice device, KxShaderEnvironment env,
+                                                     const KxAllocationCallbacks* alloc);
+    static KxResult dispatch_shader_environment_set_uniform(KxDevice device,
+                                                             KxShaderEnvironment env,
+                                                             uint32_t set,
+                                                             uint32_t binding,
+                                                             const void* pData,
+                                                             size_t size);
+    static KxResult dispatch_shader_environment_set_texture(KxDevice device,
+                                                             KxShaderEnvironment env,
+                                                             uint32_t set,
+                                                             uint32_t binding,
+                                                             KxImageView imageView,
+                                                             KxSampler sampler);
+    static void dispatch_cmd_bind_shader_environment(KxCommandBuffer cb,
+                                                      KxShaderEnvironment env);
+
+    // Materials
+    static KxResult dispatch_create_material(KxDevice device,
+                                              const KxMaterialCreateInfo* info,
+                                              const KxAllocationCallbacks* alloc,
+                                              KxMaterial* material);
+    static void dispatch_destroy_material(KxDevice device, KxMaterial material,
+                                           const KxAllocationCallbacks* alloc);
+    static KxResult dispatch_material_set_texture(KxDevice device,
+                                                   KxMaterial material,
+                                                   KxMaterialTextureSlot slot,
+                                                   KxImageView imageView,
+                                                   KxSampler sampler);
+    static KxResult dispatch_material_get_texture(KxDevice device,
+                                                   KxMaterial material,
+                                                   KxMaterialTextureSlot slot,
+                                                   KxImageView* pImageView,
+                                                   KxSampler* pSampler);
+    static KxResult dispatch_material_set_parameter(KxDevice device,
+                                                     KxMaterial material,
+                                                     const char* pName,
+                                                     const void* pValue,
+                                                     size_t size);
+    static KxResult dispatch_material_get_parameter(KxDevice device,
+                                                     KxMaterial material,
+                                                     const char* pName,
+                                                     void* pValue,
+                                                     size_t size);
+    static KxResult dispatch_material_update_descriptor_set(KxDevice device,
+                                                             KxMaterial material,
+                                                             KxDescriptorSet descriptorSet,
+                                                             uint32_t firstBinding);
+
+    // Texture helpers
+    static KxResult dispatch_get_image_info(KxDevice device,
+                                             KxImage image,
+                                             KxTextureInfo* pInfo);
+    static KxResult dispatch_create_texture_2d(KxDevice device,
+                                                uint32_t width,
+                                                uint32_t height,
+                                                KxFormat format,
+                                                const void* pPixels,
+                                                uint32_t mipLevels,
+                                                const KxAllocationCallbacks* alloc,
+                                                KxImage* pImage);
+    static KxResult dispatch_generate_mipmaps(KxDevice device, KxImage image);
+    static KxSamplerState dispatch_default_sampler_state(void);
+
     // Pipeline layout
     static KxResult dispatch_create_pipeline_layout(KxDevice device,
                                                     const KxPipelineLayoutCreateInfo* info,

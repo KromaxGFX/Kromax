@@ -22,6 +22,7 @@ void VertexAttributeFetcher::fetch_attributes(uint32_t vertex_index, uint32_t in
     input.color = nullptr;
     input.instance_index = instance_index;
     input.vertex_index = vertex_index;
+    input.environment = nullptr;
 
     if (!pipeline || !pipeline->vertex_input_state()) return;
 
@@ -69,6 +70,20 @@ void VertexAttributeFetcher::fetch_attributes(uint32_t vertex_index, uint32_t in
     }
 }
 
+static void run_vertex_shader_ir(const shader::Interpreter& interpreter,
+                                 const shader::ShaderEnvironment& env,
+                                 const KxVertexInput& input,
+                                 Vertex& out) {
+    // The interpreter would be called here with the vertex input as arguments
+    // For now, we use a simplified path - the full interpreter integration
+    // would require building a proper binding between the IR inputs and the
+    // vertex attribute data. This is a placeholder.
+    (void)interpreter;
+    (void)env;
+    (void)input;
+    (void)out;
+}
+
 Vertex SoftwareRasterizer::run_vertex_shader(SoftwareShaderModule* shader,
                                              const KxVertexInput& input,
                                              const void* push_constants) const {
@@ -89,6 +104,9 @@ Vertex SoftwareRasterizer::run_vertex_shader(SoftwareShaderModule* shader,
         out.color[1] = vs_out.color[1];
         out.color[2] = vs_out.color[2];
         out.color[3] = vs_out.color[3];
+    } else if (shader && shader->has_ir() && shader->interpreter) {
+        // Run through interpreter - would need proper environment setup
+        // This is a placeholder for the full IR execution path
     }
     return out;
 }

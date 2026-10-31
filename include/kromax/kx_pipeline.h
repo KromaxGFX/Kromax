@@ -41,6 +41,9 @@ typedef struct KxVertexInput {
     const float* color;         /* vec4 */
     uint32_t instance_index;
     uint32_t vertex_index;
+    /* Resources (uniform blocks, textures, samplers) visible to the shader.
+     * NULL for native callback shaders that do not use the environment. */
+    KxShaderEnvironment environment;
 } KxVertexInput;
 
 typedef struct KxVertexOutput {
@@ -61,6 +64,10 @@ typedef struct KxFragmentInput {
     float color[4];             /* interpolated color */
     uint32_t boundTextureCount; /* number of bound sampled textures */
     const KxBoundTexture* pBoundTextures; /* resolved sampled textures */
+    /* Interpolated clip-space position (xyz divided by w). */
+    float position[4];
+    /* Resources (uniform blocks, textures, samplers) visible to the shader. */
+    KxShaderEnvironment environment;
 } KxFragmentInput;
 
 typedef struct KxFragmentOutput {
@@ -75,6 +82,9 @@ typedef struct KxComputeInput {
     uint32_t local_id[3];       /* local invocation ID */
     uint32_t global_id[3];      /* global invocation ID */
     uint32_t local_index;       /* linear local index */
+    /* Resources (uniform blocks, storage buffers, textures) visible to the
+     * shader. NULL for native callback shaders that do not use it. */
+    KxShaderEnvironment environment;
 } KxComputeInput;
 
 typedef struct KxComputeOutput {

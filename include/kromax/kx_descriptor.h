@@ -149,7 +149,34 @@ typedef struct KxSamplerCreateInfo {
 
 /* =======================================================================
  * Bound texture (resolved descriptor)
+ *
+ * The sampler state is resolved by the driver when the descriptor is bound,
+ * so texture sampling never needs a device handle and is safe to call from
+ * inside a shader.
  * ======================================================================= */
+
+/* Fully resolved sampler configuration. */
+typedef struct KxSamplerState {
+    KxFilter magFilter;
+    KxFilter minFilter;
+    KxSamplerAddressMode addressModeU;
+    KxSamplerAddressMode addressModeV;
+    KxSamplerAddressMode addressModeW;
+    float mipLodBias;
+    KxBool32 anisotropyEnable;
+    float maxAnisotropy;
+    KxBool32 compareEnable;
+    KxCompareOp compareOp;
+    float minLod;
+    float maxLod;
+    KxBorderColor borderColor;
+    KxBool32 unnormalizedCoordinates;
+    uint32_t maxLodLevel;    /* highest mip level present in the image */
+    KxBool32 srgbDecode;     /* decode the sampled texel from sRGB */
+} KxSamplerState;
+
+/* Neutral sampler state: nearest filtering, clamp to edge, no mip bias. */
+KX_API KxSamplerState KX_CALL kxDefaultSamplerState(void);
 
 typedef struct KxBoundTexture {
     KxSampler sampler;
@@ -159,6 +186,11 @@ typedef struct KxBoundTexture {
     uint32_t rowPitch;
     KxFormat format;
     const void* pTexels;
+    /* Extended state */
+    uint32_t mipLevels;       /* number of mip levels available       */
+    uint32_t baseMipLevel;    /* first mip level covered by the view   */
+    uint32_t arrayLayers;     /* number of array layers                */
+    KxSamplerState samplerState;
 } KxBoundTexture;
 
 #ifdef __cplusplus

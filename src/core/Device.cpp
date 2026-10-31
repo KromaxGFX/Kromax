@@ -65,6 +65,31 @@ Device::Device(KxPhysicalDevice physical_device,
     /* Sampler */
     dispatch_.create_sampler = &Device::dispatch_create_sampler;
     dispatch_.destroy_sampler = &Device::dispatch_destroy_sampler;
+
+    /* Shader from source */
+    dispatch_.create_shader_module_from_source = &Device::dispatch_create_shader_module_from_source;
+
+    /* Shader environment */
+    dispatch_.create_shader_environment = &Device::dispatch_create_shader_environment;
+    dispatch_.destroy_shader_environment = &Device::dispatch_destroy_shader_environment;
+    dispatch_.shader_environment_set_uniform = &Device::dispatch_shader_environment_set_uniform;
+    dispatch_.shader_environment_set_texture = &Device::dispatch_shader_environment_set_texture;
+    dispatch_.cmd_bind_shader_environment = &Device::dispatch_cmd_bind_shader_environment;
+
+    /* Materials */
+    dispatch_.create_material = &Device::dispatch_create_material;
+    dispatch_.destroy_material = &Device::dispatch_destroy_material;
+    dispatch_.material_set_texture = &Device::dispatch_material_set_texture;
+    dispatch_.material_get_texture = &Device::dispatch_material_get_texture;
+    dispatch_.material_set_parameter = &Device::dispatch_material_set_parameter;
+    dispatch_.material_get_parameter = &Device::dispatch_material_get_parameter;
+    dispatch_.material_update_descriptor_set = &Device::dispatch_material_update_descriptor_set;
+
+    /* Texture helpers */
+    dispatch_.get_image_info = &Device::dispatch_get_image_info;
+    dispatch_.create_texture_2d = &Device::dispatch_create_texture_2d;
+    dispatch_.generate_mipmaps = &Device::dispatch_generate_mipmaps;
+    dispatch_.default_sampler_state = &Device::dispatch_default_sampler_state;
 }
 
 SoftwareCommandBuffer* Device::find_command_buffer(KxCommandBuffer cb) const {

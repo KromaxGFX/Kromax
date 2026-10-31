@@ -156,6 +156,53 @@ struct DeviceDispatch {
         const KxAllocationCallbacks*, KxSampler*);
     void (KX_CALL* destroy_sampler)(
         KxDevice, KxSampler, const KxAllocationCallbacks*);
+
+    // Shader from source
+    KxResult (KX_CALL* create_shader_module_from_source)(
+        KxDevice, const KxShaderSourceCreateInfo*,
+        const KxAllocationCallbacks*, KxShaderModule*);
+
+    // Shader environment
+    KxResult (KX_CALL* create_shader_environment)(
+        KxDevice, const KxAllocationCallbacks*, KxShaderEnvironment*);
+    void (KX_CALL* destroy_shader_environment)(
+        KxDevice, KxShaderEnvironment, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* shader_environment_set_uniform)(
+        KxDevice, KxShaderEnvironment, uint32_t, uint32_t,
+        const void*, size_t);
+    KxResult (KX_CALL* shader_environment_set_texture)(
+        KxDevice, KxShaderEnvironment, uint32_t, uint32_t,
+        KxImageView, KxSampler);
+    void (KX_CALL* cmd_bind_shader_environment)(
+        KxCommandBuffer, KxShaderEnvironment);
+
+    // Materials
+    KxResult (KX_CALL* create_material)(
+        KxDevice, const KxMaterialCreateInfo*,
+        const KxAllocationCallbacks*, KxMaterial*);
+    void (KX_CALL* destroy_material)(
+        KxDevice, KxMaterial, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* material_set_texture)(
+        KxDevice, KxMaterial, KxMaterialTextureSlot, KxImageView, KxSampler);
+    KxResult (KX_CALL* material_get_texture)(
+        KxDevice, KxMaterial, KxMaterialTextureSlot,
+        KxImageView*, KxSampler*);
+    KxResult (KX_CALL* material_set_parameter)(
+        KxDevice, KxMaterial, const char*, const void*, size_t);
+    KxResult (KX_CALL* material_get_parameter)(
+        KxDevice, KxMaterial, const char*, void*, size_t);
+    KxResult (KX_CALL* material_update_descriptor_set)(
+        KxDevice, KxMaterial, KxDescriptorSet, uint32_t);
+
+    // Texture helpers
+    KxResult (KX_CALL* get_image_info)(
+        KxDevice, KxImage, KxTextureInfo*);
+    KxResult (KX_CALL* create_texture_2d)(
+        KxDevice, uint32_t, uint32_t, KxFormat, const void*, uint32_t,
+        const KxAllocationCallbacks*, KxImage*);
+    KxResult (KX_CALL* generate_mipmaps)(
+        KxDevice, KxImage);
+    KxSamplerState (KX_CALL* default_sampler_state)(void);
 };
 
 /* -----------------------------------------------------------------------
