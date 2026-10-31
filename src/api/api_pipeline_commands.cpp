@@ -69,6 +69,22 @@ void KX_CALL kxCmdPushConstants(
     cmd->record_push_constants(layout, stageFlags, offset, size, pValues);
 }
 
+void KX_CALL kxCmdBindDescriptors(
+    KxCommandBuffer commandBuffer,
+    KxPipelineBindPoint pipelineBindPoint,
+    KxPipelineLayout layout,
+    uint32_t firstSet,
+    uint32_t setCount,
+    const KxDescriptorSet* pDescriptorSets,
+    uint32_t dynamicOffsetCount,
+    const uint32_t* pDynamicOffsets) {
+    kx::Device* dev = kx::find_device_locked_by_command_buffer(commandBuffer);
+    if (!dev) return;
+    auto* cmd = dev->find_command_buffer(commandBuffer);
+    if (!cmd) return;
+    cmd->record_bind_descriptor_sets(pipelineBindPoint, layout, firstSet, setCount, pDescriptorSets, dynamicOffsetCount, pDynamicOffsets);
+}
+
 void KX_CALL kxCmdDraw(
     KxCommandBuffer commandBuffer,
     uint32_t vertexCount,
