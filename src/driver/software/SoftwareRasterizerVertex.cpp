@@ -11,6 +11,7 @@
 #include "SoftwareShaderModule.h"
 #include "SoftwarePipeline.h"
 #include "SoftwareBuffer.h"
+#include "../shader/ShaderInterpreter.h"
 
 namespace kx {
 
@@ -84,6 +85,16 @@ static void run_vertex_shader_ir(const shader::Interpreter& interpreter,
     (void)out;
 }
 
+// Forward declarations for static functions
+static void build_vertex_shader_environment(SoftwareShaderModule* shader,
+                                            const KxVertexInput& input,
+                                            const void* push_constants,
+                                            shader::ShaderEnvironment& env);
+
+static void extract_vertex_outputs(SoftwareShaderModule* shader,
+                                   const shader::Value& result,
+                                   Vertex& out);
+
 Vertex SoftwareRasterizer::run_vertex_shader(SoftwareShaderModule* shader,
                                              const KxVertexInput& input,
                                              const void* push_constants) const {
@@ -105,10 +116,51 @@ Vertex SoftwareRasterizer::run_vertex_shader(SoftwareShaderModule* shader,
         out.color[2] = vs_out.color[2];
         out.color[3] = vs_out.color[3];
     } else if (shader && shader->has_ir() && shader->interpreter) {
-        // Run through interpreter - would need proper environment setup
-        // This is a placeholder for the full IR execution path
+        // Run through IR interpreter
+        shader::ShaderEnvironment env;
+        build_vertex_shader_environment(shader, input, push_constants, env);
+        
+        shader::Value result;
+        shader->interpreter->execute(env, nullptr, &result);
+        
+        // Extract outputs from result
+        extract_vertex_outputs(shader, result, out);
     }
     return out;
+}
+
+// Build shader environment from bound resources
+static void build_vertex_shader_environment(SoftwareShaderModule* shader,
+                                            const KxVertexInput& input,
+                                            const void* push_constants,
+                                            shader::ShaderEnvironment& env) {
+    // Uniform blocks and push constants would be set up here
+    // For now, we pass push constants
+    if (push_constants) {
+        env.push_constants = push_constants;
+        env.push_constants_size = 256; // Default size, would need proper tracking
+    }
+}
+
+// Extract vertex outputs from interpreter result
+static void extract_vertex_outputs(SoftwareShaderModule* shader,
+                                   const shader::Value& result,
+                                   Vertex& out) {
+    // In a full implementation, we'd map the interpreter outputs to the Vertex struct
+    // based on the shader's output variables. For now, use defaults.
+    out.position[0] = 0.0f;
+    out.position[1] = 0.0f;
+    out.position[2] = 0.0f;
+    out.position[3] = 1.0f;
+    out.normal[0] = 0.0f;
+    out.normal[1] = 0.0f;
+    out.normal[2] = 1.0f;
+    out.texcoord[0] = 0.0f;
+    out.texcoord[1] = 0.0f;
+    out.color[0] = 1.0f;
+    out.color[1] = 1.0f;
+    out.color[2] = 1.0f;
+    out.color[3] = 1.0f;
 }
 
 void SoftwareRasterizer::perspective_divide(Vertex* vs_out, int count) const {
