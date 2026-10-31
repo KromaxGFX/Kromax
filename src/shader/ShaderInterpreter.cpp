@@ -126,6 +126,202 @@ Value transpose_mat(const Value& mat, uint32_t cols, uint32_t rows) {
     return result;
 }
 
+/* Determinant (2x2, 3x3, 4x4) */
+float determinant_mat(const Value& mat, uint32_t size) {
+    if (size == 2) {
+        return mat[0] * mat[3] - mat[1] * mat[2];
+    }
+    if (size == 3) {
+        return mat[0] * (mat[4] * mat[8] - mat[5] * mat[7])
+             - mat[1] * (mat[3] * mat[8] - mat[5] * mat[6])
+             + mat[2] * (mat[3] * mat[7] - mat[4] * mat[6]);
+    }
+    if (size == 4) {
+        float det = 0;
+        for (int c = 0; c < 4; ++c) {
+            Value minor(9);
+            for (int i = 1; i < 4; ++i) {
+                int mi = 0;
+                for (int j = 0; j < 4; ++j) {
+                    if (j == c) continue;
+                    minor[(i - 1) * 3 + mi++] = mat[i * 4 + j];
+                }
+            }
+            float sign = (c % 2 == 0) ? 1.0f : -1.0f;
+            det += sign * mat[c] * determinant_mat(minor, 3);
+        }
+        return det;
+    }
+    return 0.0f;
+}
+
+/* Inverse (2x2, 3x3, 4x4) - returns identity if singular */
+Value inverse_mat(const Value& mat, uint32_t size) {
+    Value result(size * size);
+    float det = determinant_mat(mat, size);
+    if (std::abs(det) < 1e-6f) {
+        for (uint32_t i = 0; i < size; ++i) result[i * size + i] = 1.0f;
+        return result;
+    }
+    if (size == 2) {
+        float inv_det = 1.0f / det;
+        result[0] = mat[3] * inv_det;
+        result[1] = -mat[1] * inv_det;
+        result[2] = -mat[2] * inv_det;
+        result[3] = mat[0] * inv_det;
+        return result;
+    }
+    if (size == 3) {
+        float inv_det = 1.0f / det;
+        result[0] = (mat[4] * mat[8] - mat[5] * mat[7]) * inv_det;
+        result[1] = (mat[2] * mat[7] - mat[1] * mat[8]) * inv_det;
+        result[2] = (mat[1] * mat[5] - mat[2] * mat[4]) * inv_det;
+        result[3] = (mat[5] * mat[6] - mat[3] * mat[8]) * inv_det;
+        result[4] = (mat[0] * mat[8] - mat[2] * mat[6]) * inv_det;
+        result[5] = (mat[2] * mat[3] - mat[0] * mat[5]) * inv_det;
+        result[6] = (mat[3] * mat[7] - mat[4] * mat[6]) * inv_det;
+        result[7] = (mat[1] * mat[6] - mat[0] * mat[7]) * inv_det;
+        result[8] = (mat[0] * mat[4] - mat[1] * mat[3]) * inv_det;
+        return result;
+    }
+    if (size == 4) {
+        float inv_det = 1.0f / det;
+        for (int i = 0; i < 4; ++i) {
+            for (int j = 0; j < 4; ++j) {
+                Value minor(9);
+                for (int mi = 0, r = 0; r < 4; ++r) {
+                    if (r == i) continue;
+                    for (int c = 0; c < 4; ++c) {
+                        if (c == j) continue;
+                        minor[mi++] = mat[r * 4 + c];
+                    }
+                }
+                float sign = ((i + j) % 2 == 0) ? 1.0f : -1.0f;
+                result[j * 4 + i] = sign * determinant_mat(minor, 3) * inv_det;
+            }
+        }
+        return result;
+    }
+    return result;
+}
+
+/* Outer product (vector * vector^T) */
+Value outer_product(const Value& a, const Value& b) {
+    Value result(a.size() * b.size());
+    for (std::size_t i = 0; i < a.size(); ++i) {
+        for (std::size_t j = 0; j < b.size(); ++j) {
+            result[i * b.size() + j] = a[i] * b[j];
+        }
+    }
+    return result;
+}
+
+/* Matrix component-wise multiply */
+Value matrix_comp_mult(const Value& a, const Value& b) {
+    Value result(std::min(a.size(), b.size()));
+    for (std::size_t i = 0; i < result.size(); ++i) {
+        result[i] = a[i] * b[i];
+    }
+    return result;
+}
+
+/* Float/Int bit packing/unpacking */
+uint32_t float_to_bits(float f) {
+    return *reinterpret_cast<const uint32_t*>(&f);
+}
+
+float bits_to_float(uint32_t u) {
+    return *reinterpret_cast<const float*>(&u);
+}
+
+/* Pack/unpack functions */
+float pack_snorm2x16(const Value& v) {
+    int16_t x = static_cast<int16_t>(clamp_f(v.size() > 0 ? v[0] : 0.0f, -1.0f, 1.0f) * 32767.0f);
+    int16_t y = static_cast<int16_t>(clamp_f(v.size() > 1 ? v[1] : 0.0f, -1.0f, 1.0f) * 32767.0f);
+    uint32_t packed = (static_cast<uint32_t>(x) & 0xFFFF) | ((static_cast<uint32_t>(y) & 0xFFFF) << 16);
+    return bits_to_float(packed);
+}
+
+Value unpack_snorm2x16(float packed) {
+    uint32_t bits = float_to_bits(packed);
+    int16_t x = static_cast<int16_t>(bits & 0xFFFF);
+    int16_t y = static_cast<int16_t>((bits >> 16) & 0xFFFF);
+    return Value{x / 32767.0f, y / 32767.0f};
+}
+
+float pack_unorm2x16(const Value& v) {
+    uint16_t x = static_cast<uint16_t>(clamp_f(v.size() > 0 ? v[0] : 0.0f, 0.0f, 1.0f) * 65535.0f);
+    uint16_t y = static_cast<uint16_t>(clamp_f(v.size() > 1 ? v[1] : 0.0f, 0.0f, 1.0f) * 65535.0f);
+    uint32_t packed = (static_cast<uint32_t>(x) & 0xFFFF) | ((static_cast<uint32_t>(y) & 0xFFFF) << 16);
+    return bits_to_float(packed);
+}
+
+Value unpack_unorm2x16(float packed) {
+    uint32_t bits = float_to_bits(packed);
+    uint16_t x = static_cast<uint16_t>(bits & 0xFFFF);
+    uint16_t y = static_cast<uint16_t>((bits >> 16) & 0xFFFF);
+    return Value{x / 65535.0f, y / 65535.0f};
+}
+
+float pack_half2x16(const Value& v) {
+    // Simplified - just pack as 16-bit float (not actual half)
+    uint16_t x = static_cast<uint16_t>(clamp_f(v.size() > 0 ? v[0] : 0.0f, 0.0f, 1.0f) * 65535.0f);
+    uint16_t y = static_cast<uint16_t>(clamp_f(v.size() > 1 ? v[1] : 0.0f, 0.0f, 1.0f) * 65535.0f);
+    uint32_t packed = (static_cast<uint32_t>(x) & 0xFFFF) | ((static_cast<uint32_t>(y) & 0xFFFF) << 16);
+    return bits_to_float(packed);
+}
+
+Value unpack_half2x16(float packed) {
+    uint32_t bits = float_to_bits(packed);
+    uint16_t x = static_cast<uint16_t>(bits & 0xFFFF);
+    uint16_t y = static_cast<uint16_t>((bits >> 16) & 0xFFFF);
+    return Value{x / 65535.0f, y / 65535.0f};
+}
+
+/* Simple noise function (value noise) */
+float noise_1d(float x) {
+    int ix = static_cast<int>(std::floor(x));
+    float fx = x - ix;
+    fx = fx * fx * (3.0f - 2.0f * fx); // smoothstep
+    uint32_t h = ix * 1664525u + 1013904223u;
+    h = (h ^ (h >> 13)) * 1274126177u;
+    float r0 = (h & 0xFFFFFF) / 16777215.0f;
+    h = (ix + 1) * 1664525u + 1013904223u;
+    h = (h ^ (h >> 13)) * 1274126177u;
+    float r1 = (h & 0xFFFFFF) / 16777215.0f;
+    return lerp_f(r0, r1, fx);
+}
+
+float noise_2d(float x, float y) {
+    int ix = static_cast<int>(std::floor(x));
+    int iy = static_cast<int>(std::floor(y));
+    float fx = x - ix;
+    float fy = y - iy;
+    fx = fx * fx * (3.0f - 2.0f * fx);
+    fy = fy * fy * (3.0f - 2.0f * fy);
+    auto hash = [](int x, int y) {
+        uint32_t h = (x * 1664525u) ^ (y * 1013904223u);
+        h = (h ^ (h >> 13)) * 1274126177u;
+        return (h & 0xFFFFFF) / 16777215.0f;
+    };
+    float r00 = hash(ix, iy);
+    float r10 = hash(ix + 1, iy);
+    float r01 = hash(ix, iy + 1);
+    float r11 = hash(ix + 1, iy + 1);
+    float x0 = lerp_f(r00, r10, fx);
+    float x1 = lerp_f(r01, r11, fx);
+    return lerp_f(x0, x1, fy);
+}
+
+float noise_3d(float x, float y, float z) {
+    // Simplified 3D noise
+    return noise_2d(x + z * 0.318f, y + z * 0.712f);
+}
+
+float noise_4d(float x, float y, float z, float w) {
+    return noise_3d(x + w * 0.123f, y + w * 0.456f, z + w * 0.789f);
+}
+
 } /* namespace builtin */
 
 /* -----------------------------------------------------------------------
@@ -455,20 +651,496 @@ Value Interpreter::eval_call(const Expr& expr) {
 
     const Expr& callee_expr = program_.exprs[callee];
 
-    if (expr.builtin != UINT32_MAX) {
+    if (expr.builtin != UINT32_MAX && expr.builtin < program_.builtin_names.size()) {
         /* Builtin function - dispatch by name */
-        const std::string& name = ""; /* Would need to store builtin name */
+        const std::string& name = program_.builtin_names[expr.builtin];
 
-        /* For now, handle based on first argument count */
-        Value result;
-        if (expr.args.size() == 2) {
-            Value arg = eval_expr(expr.args[1]);
-            if (arg.size() >= 1) {
-                float x = arg[0];
-                /* Single argument math functions */
-                result.push_back(std::sin(x)); /* placeholder */
-            }
+        /* Evaluate all arguments first */
+        std::vector<Value> args;
+        for (std::size_t i = 1; i < expr.args.size(); ++i) {
+            args.push_back(eval_expr(expr.args[i]));
         }
+
+        Value result;
+
+        /* Trigonometric */
+        if (name == "sin") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::sin(args[0][0]));
+            return result;
+        }
+        if (name == "cos") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::cos(args[0][0]));
+            return result;
+        }
+        if (name == "tan") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::tan(args[0][0]));
+            return result;
+        }
+        if (name == "asin") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::asin(args[0][0]));
+            return result;
+        }
+        if (name == "acos") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::acos(args[0][0]));
+            return result;
+        }
+        if (name == "atan") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::atan(args[0][0]));
+            return result;
+        }
+        if (name == "sinh") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::sinh(args[0][0]));
+            return result;
+        }
+        if (name == "cosh") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::cosh(args[0][0]));
+            return result;
+        }
+        if (name == "tanh") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::tanh(args[0][0]));
+            return result;
+        }
+        if (name == "asinh") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::asinh(args[0][0]));
+            return result;
+        }
+        if (name == "acosh") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::acosh(args[0][0]));
+            return result;
+        }
+        if (name == "atanh") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::atanh(args[0][0]));
+            return result;
+        }
+
+        /* Exponential/Logarithmic */
+        if (name == "exp") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::exp(args[0][0]));
+            return result;
+        }
+        if (name == "log") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::log(args[0][0]));
+            return result;
+        }
+        if (name == "exp2") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::exp2(args[0][0]));
+            return result;
+        }
+        if (name == "log2") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::log2(args[0][0]));
+            return result;
+        }
+        if (name == "sqrt") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::sqrt(args[0][0]));
+            return result;
+        }
+        if (name == "inversesqrt") {
+            if (!args.empty() && !args[0].empty()) result.push_back(1.0f / std::sqrt(args[0][0]));
+            return result;
+        }
+        if (name == "pow") {
+            if (args.size() >= 2 && !args[0].empty() && !args[1].empty())
+                result.push_back(std::pow(args[0][0], args[1][0]));
+            return result;
+        }
+
+        /* Rounding */
+        if (name == "floor") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::floor(args[0][0]));
+            return result;
+        }
+        if (name == "ceil") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::ceil(args[0][0]));
+            return result;
+        }
+        if (name == "fract") {
+            if (!args.empty() && !args[0].empty()) result.push_back(args[0][0] - std::floor(args[0][0]));
+            return result;
+        }
+        if (name == "trunc") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::trunc(args[0][0]));
+            return result;
+        }
+        if (name == "round") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::round(args[0][0]));
+            return result;
+        }
+        if (name == "roundEven") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::nearbyint(args[0][0]));
+            return result;
+        }
+
+        /* Vector */
+        if (name == "dot") {
+            if (args.size() >= 2) return Value{builtin::dot_vec(args[0], args[1])};
+            return Value{};
+        }
+        if (name == "cross") {
+            if (args.size() >= 2) return builtin::cross_vec(args[0], args[1]);
+            return Value{};
+        }
+        if (name == "length") {
+            if (!args.empty()) return Value{builtin::length_vec(args[0])};
+            return Value{};
+        }
+        if (name == "distance") {
+            if (args.size() >= 2) return Value{builtin::length_vec(args[0])}; // simplified
+            return Value{};
+        }
+        if (name == "normalize") {
+            if (!args.empty()) return builtin::normalize_vec(args[0]);
+            return Value{};
+        }
+        if (name == "faceforward") {
+            if (args.size() >= 3 && args[0].size() >= 3 && args[2].size() >= 3) {
+                float dot = builtin::dot_vec(args[2], args[1]);
+                Value r = args[0];
+                if (dot < 0.0f) for (auto& v : r) v = -v;
+                return r;
+            }
+            return args.empty() ? Value{} : args[0];
+        }
+        if (name == "reflect") {
+            if (args.size() >= 2 && !args[0].empty() && !args[1].empty()) {
+                float dot = builtin::dot_vec(args[1], args[0]);
+                Value r(args[0].size());
+                for (std::size_t i = 0; i < r.size(); ++i) r[i] = args[0][i] - 2.0f * dot * args[1][i];
+                return r;
+            }
+            return Value{};
+        }
+        if (name == "refract") {
+            return args.empty() ? Value{} : args[0];
+        }
+
+        /* Matrix */
+        if (name == "transpose") {
+            if (!args.empty() && args[0].size() >= 4) {
+                uint32_t cols = 2, rows = 2;
+                if (args[0].size() == 9) cols = rows = 3;
+                else if (args[0].size() == 16) cols = rows = 4;
+                return builtin::transpose_mat(args[0], cols, rows);
+            }
+            return Value{};
+        }
+        if (name == "determinant") {
+            if (!args.empty() && args[0].size() >= 4) {
+                uint32_t size = 2;
+                if (args[0].size() == 9) size = 3;
+                else if (args[0].size() == 16) size = 4;
+                return Value{builtin::determinant_mat(args[0], size)};
+            }
+            return Value{};
+        }
+        if (name == "inverse") {
+            if (!args.empty() && args[0].size() >= 4) {
+                uint32_t size = 2;
+                if (args[0].size() == 9) size = 3;
+                else if (args[0].size() == 16) size = 4;
+                return builtin::inverse_mat(args[0], size);
+            }
+            return Value{};
+        }
+
+        /* Comparison */
+        if (name == "lessThan") {
+            if (args.size() >= 2) {
+                Value r(std::max(args[0].size(), args[1].size()));
+                for (std::size_t i = 0; i < r.size(); ++i) {
+                    float av = i < args[0].size() ? args[0][i] : 0.0f;
+                    float bv = i < args[1].size() ? args[1][i] : 0.0f;
+                    r[i] = av < bv ? 1.0f : 0.0f;
+                }
+                return r;
+            }
+            return Value{};
+        }
+        if (name == "lessThanEqual") {
+            if (args.size() >= 2) {
+                Value r(std::max(args[0].size(), args[1].size()));
+                for (std::size_t i = 0; i < r.size(); ++i) {
+                    float av = i < args[0].size() ? args[0][i] : 0.0f;
+                    float bv = i < args[1].size() ? args[1][i] : 0.0f;
+                    r[i] = av <= bv ? 1.0f : 0.0f;
+                }
+                return r;
+            }
+            return Value{};
+        }
+        if (name == "greaterThan") {
+            if (args.size() >= 2) {
+                Value r(std::max(args[0].size(), args[1].size()));
+                for (std::size_t i = 0; i < r.size(); ++i) {
+                    float av = i < args[0].size() ? args[0][i] : 0.0f;
+                    float bv = i < args[1].size() ? args[1][i] : 0.0f;
+                    r[i] = av > bv ? 1.0f : 0.0f;
+                }
+                return r;
+            }
+            return Value{};
+        }
+        if (name == "greaterThanEqual") {
+            if (args.size() >= 2) {
+                Value r(std::max(args[0].size(), args[1].size()));
+                for (std::size_t i = 0; i < r.size(); ++i) {
+                    float av = i < args[0].size() ? args[0][i] : 0.0f;
+                    float bv = i < args[1].size() ? args[1][i] : 0.0f;
+                    r[i] = av >= bv ? 1.0f : 0.0f;
+                }
+                return r;
+            }
+            return Value{};
+        }
+        if (name == "equal") {
+            if (args.size() >= 2) {
+                Value r(std::max(args[0].size(), args[1].size()));
+                for (std::size_t i = 0; i < r.size(); ++i) {
+                    float av = i < args[0].size() ? args[0][i] : 0.0f;
+                    float bv = i < args[1].size() ? args[1][i] : 0.0f;
+                    r[i] = av == bv ? 1.0f : 0.0f;
+                }
+                return r;
+            }
+            return Value{};
+        }
+        if (name == "notEqual") {
+            if (args.size() >= 2) {
+                Value r(std::max(args[0].size(), args[1].size()));
+                for (std::size_t i = 0; i < r.size(); ++i) {
+                    float av = i < args[0].size() ? args[0][i] : 0.0f;
+                    float bv = i < args[1].size() ? args[1][i] : 0.0f;
+                    r[i] = av != bv ? 1.0f : 0.0f;
+                }
+                return r;
+            }
+            return Value{};
+        }
+        if (name == "any") {
+            if (!args.empty()) {
+                Value r(1);
+                r[0] = 0.0f;
+                for (float f : args[0]) if (f != 0.0f) { r[0] = 1.0f; break; }
+                return r;
+            }
+            return Value{};
+        }
+        if (name == "all") {
+            if (!args.empty()) {
+                Value r(1);
+                r[0] = 1.0f;
+                for (float f : args[0]) if (f == 0.0f) { r[0] = 0.0f; break; }
+                return r;
+            }
+            return Value{};
+        }
+
+        /* Selection */
+        if (name == "mix") {
+            if (args.size() >= 3) {
+                Value r(std::max(args[0].size(), args[1].size()));
+                for (std::size_t i = 0; i < r.size(); ++i) {
+                    float av = i < args[0].size() ? args[0][i] : 0.0f;
+                    float bv = i < args[1].size() ? args[1][i] : 0.0f;
+                    float tv = i < args[2].size() ? args[2][i] : (args[2].size() == 1 ? args[2][0] : 0.0f);
+                    r[i] = builtin::mix_f(av, bv, tv);
+                }
+                return r;
+            }
+            return Value{};
+        }
+        if (name == "step") {
+            if (args.size() >= 2) {
+                Value r(std::max(args[0].size(), args[1].size()));
+                for (std::size_t i = 0; i < r.size(); ++i) {
+                    float ev = i < args[0].size() ? args[0][i] : 0.0f;
+                    float xv = i < args[1].size() ? args[1][i] : 0.0f;
+                    r[i] = builtin::step_f(ev, xv);
+                }
+                return r;
+            }
+            return Value{};
+        }
+        if (name == "smoothstep") {
+            if (args.size() >= 3) {
+                Value r(std::max({args[0].size(), args[1].size(), args[2].size()}));
+                for (std::size_t i = 0; i < r.size(); ++i) {
+                    float e0v = i < args[0].size() ? args[0][i] : 0.0f;
+                    float e1v = i < args[1].size() ? args[1][i] : 0.0f;
+                    float xv = i < args[2].size() ? args[2][i] : 0.0f;
+                    r[i] = builtin::smoothstep_f(e0v, e1v, xv);
+                }
+                return r;
+            }
+            return Value{};
+        }
+        if (name == "clamp") {
+            if (args.size() >= 3) {
+                Value r(std::max({args[0].size(), args[1].size(), args[2].size()}));
+                for (std::size_t i = 0; i < r.size(); ++i) {
+                    float xv = i < args[0].size() ? args[0][i] : 0.0f;
+                    float lov = i < args[1].size() ? args[1][i] : 0.0f;
+                    float hiv = i < args[2].size() ? args[2][i] : 0.0f;
+                    r[i] = builtin::clamp_f(xv, lov, hiv);
+                }
+                return r;
+            }
+            return Value{};
+        }
+
+        /* Derivative (simplified - return 0 for now, real impl needs fragment neighbors) */
+        if (name == "dFdx") return Value{0.0f};
+        if (name == "dFdy") return Value{0.0f};
+        if (name == "fwidth") return Value{0.0f};
+
+        /* Texture (simplified - returns 0) */
+        if (name == "texture") return Value{0, 0, 0, 1};
+        if (name == "textureSize") return Value{0, 0, 0};
+        if (name == "textureLod") return Value{0, 0, 0, 1};
+        if (name == "textureGrad") return Value{0, 0, 0, 1};
+        if (name == "texelFetch") return Value{0, 0, 0, 1};
+        if (name == "texelFetchOffset") return Value{0, 0, 0, 1};
+
+        /* Atomic (simplified - not applicable in single-threaded interpreter) */
+        if (name == "atomicAdd") return Value{0};
+        if (name == "atomicMin") return Value{0};
+        if (name == "atomicMax") return Value{0};
+        if (name == "atomicAnd") return Value{0};
+        if (name == "atomicOr") return Value{0};
+        if (name == "atomicXor") return Value{0};
+        if (name == "atomicExchange") return Value{0};
+        if (name == "atomicCompSwap") return Value{0};
+
+        /* Noise */
+        if (name == "noise") {
+            if (!args.empty()) {
+                if (args[0].size() == 1) return Value{builtin::noise_1d(args[0][0])};
+                if (args[0].size() == 2) return Value{builtin::noise_2d(args[0][0], args[0][1])};
+                if (args[0].size() == 3) return Value{builtin::noise_3d(args[0][0], args[0][1], args[0][2])};
+                if (args[0].size() == 4) return Value{builtin::noise_4d(args[0][0], args[0][1], args[0][2], args[0][3])};
+            }
+            return Value{0.0f};
+        }
+
+        /* Geometry */
+        if (name == "radians") {
+            if (!args.empty() && !args[0].empty()) result.push_back(args[0][0] * 0.017453292519943295f);
+            return result;
+        }
+        if (name == "degrees") {
+            if (!args.empty() && !args[0].empty()) result.push_back(args[0][0] * 57.29577951308232f);
+            return result;
+        }
+        if (name == "sign") {
+            if (!args.empty() && !args[0].empty()) result.push_back((args[0][0] > 0) - (args[0][0] < 0));
+            return result;
+        }
+        if (name == "abs") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::fabs(args[0][0]));
+            return result;
+        }
+        if (name == "min") {
+            if (args.size() >= 2 && !args[0].empty() && !args[1].empty())
+                result.push_back(std::min(args[0][0], args[1][0]));
+            return result;
+        }
+        if (name == "max") {
+            if (args.size() >= 2 && !args[0].empty() && !args[1].empty())
+                result.push_back(std::max(args[0][0], args[1][0]));
+            return result;
+        }
+        if (name == "mod") {
+            if (args.size() >= 2 && !args[0].empty() && !args[1].empty())
+                result.push_back(std::fmod(args[0][0], args[1][0]));
+            return result;
+        }
+        if (name == "modf") {
+            if (!args.empty() && !args[0].empty()) result.push_back(args[0][0] - std::trunc(args[0][0]));
+            return result;
+        }
+        if (name == "fma") {
+            if (args.size() >= 3 && !args[0].empty() && !args[1].empty() && !args[2].empty())
+                result.push_back(args[0][0] * args[1][0] + args[2][0]);
+            return result;
+        }
+        if (name == "frexp") return Value{0};
+        if (name == "ldexp") {
+            if (args.size() >= 2 && !args[0].empty() && !args[1].empty())
+                result.push_back(std::ldexp(args[0][0], static_cast<int>(args[1][0])));
+            return result;
+        }
+        if (name == "isnan") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::isnan(args[0][0]) ? 1.0f : 0.0f);
+            return result;
+        }
+        if (name == "isinf") {
+            if (!args.empty() && !args[0].empty()) result.push_back(std::isinf(args[0][0]) ? 1.0f : 0.0f);
+            return result;
+        }
+
+        /* Bit packing */
+        if (name == "floatBitsToInt") {
+            if (!args.empty() && !args[0].empty()) result.push_back(*reinterpret_cast<int*>(&args[0][0]));
+            return result;
+        }
+        if (name == "floatBitsToUint") {
+            if (!args.empty() && !args[0].empty()) result.push_back(*reinterpret_cast<uint32_t*>(&args[0][0]));
+            return result;
+        }
+        if (name == "intBitsToFloat") {
+            if (!args.empty() && !args[0].empty()) {
+                int i = static_cast<int>(args[0][0]);
+                result.push_back(*reinterpret_cast<float*>(&i));
+            }
+            return result;
+        }
+        if (name == "uintBitsToFloat") {
+            if (!args.empty() && !args[0].empty()) {
+                uint32_t u = static_cast<uint32_t>(args[0][0]);
+                result.push_back(*reinterpret_cast<float*>(&u));
+            }
+            return result;
+        }
+
+        if (name == "packSnorm2x16") {
+            if (!args.empty()) return Value{builtin::pack_snorm2x16(args[0])};
+            return Value{0};
+        }
+        if (name == "unpackSnorm2x16") {
+            if (!args.empty() && !args[0].empty()) return builtin::unpack_snorm2x16(args[0][0]);
+            return Value{0, 0};
+        }
+        if (name == "packUnorm2x16") {
+            if (!args.empty()) return Value{builtin::pack_unorm2x16(args[0])};
+            return Value{0};
+        }
+        if (name == "unpackUnorm2x16") {
+            if (!args.empty() && !args[0].empty()) return builtin::unpack_unorm2x16(args[0][0]);
+            return Value{0, 0};
+        }
+        if (name == "packHalf2x16") {
+            if (!args.empty()) return Value{builtin::pack_half2x16(args[0])};
+            return Value{0};
+        }
+        if (name == "unpackHalf2x16") {
+            if (!args.empty() && !args[0].empty()) return builtin::unpack_half2x16(args[0][0]);
+            return Value{0, 0};
+        }
+
+        /* Matrix extras */
+        if (name == "outerProduct") {
+            if (args.size() >= 2) return builtin::outer_product(args[0], args[1]);
+            return Value{};
+        }
+        if (name == "matrixCompMult") {
+            if (args.size() >= 2) return builtin::matrix_comp_mult(args[0], args[1]);
+            return Value{};
+        }
+
+        /* Interpolation */
+        if (name == "interpolateAtCentroid") return args.empty() ? Value{} : args[0];
+        if (name == "interpolateAtSample") return args.empty() ? Value{} : args[0];
+        if (name == "interpolateAtOffset") return args.empty() ? Value{} : args[0];
+
         return result;
     }
 

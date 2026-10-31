@@ -20,42 +20,21 @@ namespace {
 
 bool is_builtin_function(const std::string& name) {
     static const std::vector<std::string> builtins = {
-        /* trig */
-        "sin", "cos", "tan", "asin", "acos", "atan", "sinh", "cosh", "tanh",
-        "asinh", "acosh", "atanh",
-        /* exp/log */
-        "exp", "log", "exp2", "log2", "sqrt", "inversesqrt", "pow",
-        /* rounding */
-        "floor", "ceil", "fract", "trunc", "round", "roundEven",
-        /* vector */
-        "dot", "cross", "length", "distance", "normalize", "faceforward",
-        "reflect", "refract",
-        /* matrix */
-        "transpose", "determinant", "inverse",
-        /* comparison */
-        "lessThan", "lessThanEqual", "greaterThan", "greaterThanEqual",
-        "equal", "notEqual", "any", "all",
-        /* selection */
-        "mix", "step", "smoothstep", "clamp",
-        /* derivative */
-        "dFdx", "dFdy", "fwidth",
-        /* texture */
-        "texture", "textureSize", "textureLod", "textureGrad",
-        "texelFetch", "texelFetchOffset",
-        /* atomic */
-        "atomicAdd", "atomicMin", "atomicMax", "atomicAnd", "atomicOr",
-        "atomicXor", "atomicExchange", "atomicCompSwap",
-        /* noise */
-        "noise",
-        /* geometry */
-        "radians", "degrees", "sign", "abs", "min", "max", "mod", "modf",
-        "fma", "frexp", "ldexp", "isnan", "isinf", "floatBitsToInt",
-        "floatBitsToUint", "intBitsToFloat", "uintBitsToFloat",
-        "packSnorm2x16", "unpackSnorm2x16", "packUnorm2x16",
-        "unpackUnorm2x16", "packHalf2x16", "unpackHalf2x16",
-        "outerProduct", "matrixCompMult",
-        /* interpolation */
-        "interpolateAtCentroid", "interpolateAtSample", "interpolateAtOffset",
+        "abs", "acos", "acosh", "all", "any", "asin", "asinh", "atan", "atanh",
+        "atomicAdd", "atomicAnd", "atomicCompSwap", "atomicExchange", "atomicMax",
+        "atomicMin", "atomicOr", "atomicXor",
+        "clamp", "cos", "cosh", "cross", "degrees", "determinant", "distance",
+        "dot", "dFdx", "dFdy", "equal", "exp", "exp2", "faceforward", "floatBitsToInt",
+        "floatBitsToUint", "floor", "fma", "fract", "frexp", "fwidth", "greaterThan",
+        "greaterThanEqual", "inverse", "inversesqrt", "interpolateAtCentroid",
+        "interpolateAtOffset", "interpolateAtSample", "intBitsToFloat", "isinf",
+        "isnan", "ldexp", "length", "lessThan", "lessThanEqual", "log", "log2",
+        "matrixCompMult", "max", "min", "mix", "mod", "modf", "noise", "normalize",
+        "notEqual", "outerProduct", "packHalf2x16", "packSnorm2x16", "packUnorm2x16",
+        "pow", "radians", "reflect", "refract", "round", "roundEven", "sign",
+        "sin", "sinh", "smoothstep", "sqrt", "step", "tan", "tanh", "texture",
+        "textureGrad", "textureLod", "textureSize", "transpose", "trunc",
+        "uintBitsToFloat", "unpackHalf2x16", "unpackSnorm2x16", "unpackUnorm2x16",
     };
     return std::binary_search(builtins.begin(), builtins.end(), name);
 }
@@ -1245,7 +1224,8 @@ uint32_t Parser::parse_call_expr(uint32_t callee) {
         program_.exprs[callee].kind == ExprKind::VarRef) {
         const Token& tok = tokens_[position_ - expr.args.size() - 2];
         if (is_builtin_function(tok.text)) {
-            expr.builtin = static_cast<uint32_t>(program_.functions.size());
+            expr.builtin = static_cast<uint32_t>(program_.builtin_names.size());
+            program_.builtin_names.push_back(tok.text);
             expr.func = UINT32_MAX;
         }
     }

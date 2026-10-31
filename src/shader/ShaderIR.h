@@ -216,6 +216,7 @@ struct ShaderProgram {
     std::vector<Variable> globals;   /* uniforms, inputs, outputs, resources */
     std::vector<Function> functions;
     std::vector<Expr> exprs;
+    std::vector<std::string> builtin_names;  /* Maps builtin ID -> name */
 
     uint32_t entry = UINT32_MAX;
 

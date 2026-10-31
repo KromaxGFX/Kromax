@@ -166,6 +166,7 @@ private:
     void execute_draw(const CmdDraw& cmd);
     void execute_draw_indexed(const CmdDrawIndexed& cmd);
     void execute_bind_descriptor_sets(const CmdBindDescriptorSets& cmd);
+    void execute_dispatch(const CmdDispatch& cmd);
     static uint32_t format_pixel_size(KxFormat format);
 
     // Current pipeline state for draw commands

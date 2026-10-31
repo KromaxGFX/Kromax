@@ -238,6 +238,7 @@ target_sources(kromax PRIVATE
     src/shader/ShaderTypes.cpp
     src/shader/ShaderIR.cpp
     src/driver/software/SoftwareRasterizerDraw.cpp
+    src/driver/software/SoftwareRasterizerCompute.cpp
     src/driver/software/SoftwareRasterizerDrawIndexed.cpp
     src/driver/software/SoftwareRasterizerVertex.cpp
     src/driver/software/SoftwareRasterizerFragment.cpp

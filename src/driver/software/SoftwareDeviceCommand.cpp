@@ -13,6 +13,7 @@
 #include "SoftwareShaderModule.h"
 #include "SoftwareRasterizer.h"
 #include "SoftwareFramebuffer.h"
+#include "SoftwareRasterizerCompute.h"
 
 namespace kx {
 
@@ -62,8 +63,7 @@ void SoftwareDevice::execute_command(const CommandVariant& cmd) {
         } else if constexpr (std::is_same_v<T, CmdDrawIndexed>) {
             execute_draw_indexed(arg);
         } else if constexpr (std::is_same_v<T, CmdDispatch>) {
-            // Dispatch - not implemented yet
-            (void)arg;
+            execute_dispatch(arg);
         } else if constexpr (std::is_same_v<T, CmdBeginRenderPass>) {
             execute_begin_render_pass(arg);
         } else if constexpr (std::is_same_v<T, CmdEndRenderPass>) {
@@ -140,6 +140,47 @@ void SoftwareDevice::execute_bind_descriptor_sets(const CmdBindDescriptorSets& c
     // Dynamic offsets not implemented yet
     (void)cmd.dynamic_offset_count;
     (void)cmd.dynamic_offsets;
+}
+
+void SoftwareDevice::execute_dispatch(const CmdDispatch& cmd) {
+    if (!current_pipeline_ || !current_pipeline_->compute_shader()) {
+        return;
+    }
+
+    auto* compute_shader = current_pipeline_->compute_shader();
+
+    // Collect bound descriptor sets
+    std::vector<SoftwareDescriptorSet*> descriptor_sets;
+    for (uint32_t i = 0; i < current_descriptor_set_count_ && i < 16; ++i) {
+        KxDescriptorSet ds = current_descriptor_sets_[current_first_descriptor_set_ + i];
+        if (ds) {
+            auto* sw_ds = find_descriptor_set(ds);
+            if (sw_ds) {
+                descriptor_sets.push_back(sw_ds);
+            }
+        }
+    }
+
+    // Build compute dispatch info from pipeline
+    ComputeDispatchInfo dispatch_info;
+    dispatch_info.group_count_x = cmd.group_x;
+    dispatch_info.group_count_y = cmd.group_y;
+    dispatch_info.group_count_z = cmd.group_z;
+
+    // Get local workgroup size from shader module (if available)
+    // For now, use defaults - in a full impl this comes from the shader
+    dispatch_info.local_size_x = 1;
+    dispatch_info.local_size_y = 1;
+    dispatch_info.local_size_z = 1;
+
+    // Get push constants
+    const void* push_constants = compute_shader->push_constants;
+    uint32_t push_constants_size = compute_shader->push_constants_size;
+
+    // Execute compute dispatch
+    SoftwareRasterizerCompute compute_rasterizer(this);
+    compute_rasterizer.dispatch(dispatch_info, compute_shader, descriptor_sets,
+                                push_constants, push_constants_size);
 }
 
 } /* namespace kx */
