@@ -194,6 +194,7 @@ std::vector<Token> Lexer::tokenize(const std::string& text, uint32_t file_id) {
 
         /* Punctuators */
         bool matched = false;
+        const char* matched_candidate = nullptr;
         for (const char* candidate : kPunctuators) {
             const std::size_t length = std::strlen(candidate);
             if (i + length <= size && text.compare(i, length, candidate) == 0) {
@@ -202,12 +203,13 @@ std::vector<Token> Lexer::tokenize(const std::string& text, uint32_t file_id) {
                 advance(length);
                 tokens.push_back(std::move(token));
                 matched = true;
+                matched_candidate = candidate;
                 break;
             }
         }
         if (matched) {
             line_start = false;
-            pending_hash = (token.text == "#");
+            pending_hash = (matched_candidate != nullptr && std::strcmp(matched_candidate, "#") == 0);
             continue;
         }
 

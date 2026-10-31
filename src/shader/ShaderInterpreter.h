@@ -90,11 +90,12 @@ public:
     uint32_t call_depth() const noexcept { return call_depth_; }
 
 private:
-    const ShaderProgram& program_;
+    ShaderProgram program_;
     const ShaderEnvironment* env_ = nullptr;
     uint32_t call_depth_ = 0;
     uint32_t current_function_ = UINT32_MAX;
     std::vector<Value> stack_;      /* call stack frames */
+    int stmt_counter_ = 0;
 
     void execute_stmt(const Stmt& stmt);
     void execute_block(const std::vector<Stmt>& stmts);

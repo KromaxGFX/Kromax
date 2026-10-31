@@ -6,17 +6,38 @@
 
 #include "ShaderIR.h"
 
+#include <algorithm>
 #include <sstream>
 #include <iomanip>
+#include <string>
 
 namespace kx {
 namespace shader {
 
+static const char* shader_stage_name(KxShaderStage stage) {
+    switch (stage) {
+        case KX_SHADER_STAGE_VERTEX: return "VERTEX";
+        case KX_SHADER_STAGE_FRAGMENT: return "FRAGMENT";
+        case KX_SHADER_STAGE_COMPUTE: return "COMPUTE";
+        default: return "UNKNOWN";
+    }
+}
+
+static const char* shader_language_name(KxShaderLanguage lang) {
+    switch (lang) {
+        case KX_SHADER_LANGUAGE_GLSL: return "GLSL";
+        case KX_SHADER_LANGUAGE_HLSL: return "HLSL";
+        case KX_SHADER_LANGUAGE_WGSL: return "WGSL";
+        case KX_SHADER_LANGUAGE_KXSL: return "KXSL";
+        default: return "UNKNOWN";
+    }
+}
+
 std::string dump_program(const ShaderProgram& program) {
     std::ostringstream oss;
     oss << "ShaderProgram {\n";
-    oss << "  stage: " << static_cast<int>(program.stage) << "\n";
-    oss << "  language: " << static_cast<int>(program.language) << "\n";
+    oss << "  stage: " << shader_stage_name(program.stage) << "\n";
+    oss << "  language: " << shader_language_name(program.language) << "\n";
     oss << "  entry_name: " << program.entry_name << "\n";
     oss << "  entry: " << program.entry << "\n";
     oss << "  structs: " << program.structs.size() << "\n";

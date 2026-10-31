@@ -39,15 +39,28 @@ ShaderType promote(ShaderType a, ShaderType b) noexcept {
 
     TypeClass result_cls = (a_is_float || b_is_float) ? TypeClass::Float : TypeClass::Int;
 
-    /* For vectors/matrices, preserve the shape */
-    if (a.cls == TypeClass::Vector || a.cls == TypeClass::Matrix) {
+    /* For vectors/matrices, preserve the shape and class */
+    bool a_is_vec = a.cls == TypeClass::Vector || a.cls == TypeClass::Matrix || (a.is_scalar() && a.rows > 1);
+    bool b_is_vec = b.cls == TypeClass::Vector || b.cls == TypeClass::Matrix || (b.is_scalar() && b.rows > 1);
+
+    if (a_is_vec) {
         ShaderType result = a;
-        result.cls = result_cls;
+        if (a.cls == TypeClass::Vector || a.cls == TypeClass::Matrix) {
+            result.cls = a.cls;
+        } else {
+            /* Legacy vector representation: scalar cls with rows > 1 -> convert to proper Vector */
+            result.cls = result_cls == TypeClass::Int ? TypeClass::Vector : TypeClass::Vector;
+            /* rows already set correctly */
+        }
         return result;
     }
-    if (b.cls == TypeClass::Vector || b.cls == TypeClass::Matrix) {
+    if (b_is_vec) {
         ShaderType result = b;
-        result.cls = result_cls;
+        if (b.cls == TypeClass::Vector || b.cls == TypeClass::Matrix) {
+            result.cls = b.cls;
+        } else {
+            result.cls = result_cls == TypeClass::Int ? TypeClass::Vector : TypeClass::Vector;
+        }
         return result;
     }
 

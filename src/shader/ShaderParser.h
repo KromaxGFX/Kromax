@@ -56,7 +56,7 @@ private:
     /* Top level */
     void parse_program(const std::vector<Token>& tokens, uint32_t source_file);
     void parse_declaration();
-    void parse_function(Function& func);
+    void parse_function();
 
     /* Types */
     ShaderType parse_type();

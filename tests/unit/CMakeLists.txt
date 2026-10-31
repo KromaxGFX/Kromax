@@ -34,3 +34,57 @@ add_executable(test_descriptors test_descriptors.cpp)
 target_link_libraries(test_descriptors PRIVATE kromax)
 target_include_directories(test_descriptors PRIVATE ${CMAKE_SOURCE_DIR}/include)
 add_test(NAME descriptor_tests COMMAND test_descriptors)
+
+# Shader Lexer tests
+add_executable(test_shader_lexer test_shader_lexer.cpp)
+target_link_libraries(test_shader_lexer PRIVATE kromax)
+target_include_directories(test_shader_lexer PRIVATE ${DOCTEST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include/kromax ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/shader)
+add_test(NAME shader_lexer_tests COMMAND test_shader_lexer)
+
+# Shader Parser tests
+add_executable(test_shader_parser test_shader_parser.cpp)
+target_link_libraries(test_shader_parser PRIVATE kromax)
+target_include_directories(test_shader_parser PRIVATE ${DOCTEST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include/kromax ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/shader)
+add_test(NAME shader_parser_tests COMMAND test_shader_parser)
+
+# Shader IR tests
+add_executable(test_shader_ir test_shader_ir.cpp)
+target_link_libraries(test_shader_ir PRIVATE kromax)
+target_include_directories(test_shader_ir PRIVATE ${DOCTEST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include/kromax ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/shader)
+add_test(NAME shader_ir_tests COMMAND test_shader_ir)
+
+# Shader Interpreter tests
+add_executable(test_shader_interpreter test_shader_interpreter.cpp)
+target_link_libraries(test_shader_interpreter PRIVATE kromax)
+target_include_directories(test_shader_interpreter PRIVATE ${DOCTEST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include/kromax ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/shader)
+add_test(NAME shader_interpreter_tests COMMAND test_shader_interpreter)
+
+# Shader Builtins tests
+add_executable(test_shader_builtins test_shader_builtins.cpp)
+target_link_libraries(test_shader_builtins PRIVATE kromax)
+target_include_directories(test_shader_builtins PRIVATE ${DOCTEST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include/kromax ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/shader)
+add_test(NAME shader_builtins_tests COMMAND test_shader_builtins)
+
+# Shader Compiler tests
+add_executable(test_shader_compiler test_shader_compiler.cpp)
+target_link_libraries(test_shader_compiler PRIVATE kromax)
+target_include_directories(test_shader_compiler PRIVATE ${DOCTEST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include/kromax ${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/src/shader)
+add_test(NAME shader_compiler_tests COMMAND test_shader_compiler)
+
+# Sampler Filtering tests
+add_executable(test_sampler_filtering test_sampler_filtering.cpp)
+target_link_libraries(test_sampler_filtering PRIVATE kromax)
+target_include_directories(test_sampler_filtering PRIVATE ${DOCTEST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include/kromax ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME sampler_filtering_tests COMMAND test_sampler_filtering)
+
+# Mipmap Generation tests
+add_executable(test_mipmap_generation test_mipmap_generation.cpp)
+target_link_libraries(test_mipmap_generation PRIVATE kromax)
+target_include_directories(test_mipmap_generation PRIVATE ${DOCTEST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include/kromax ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME mipmap_generation_tests COMMAND test_mipmap_generation)
+
+# Material Lifecycle tests
+add_executable(test_material_lifecycle test_material_lifecycle.cpp)
+target_link_libraries(test_material_lifecycle PRIVATE kromax)
+target_include_directories(test_material_lifecycle PRIVATE ${DOCTEST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/include ${CMAKE_SOURCE_DIR}/include/kromax ${CMAKE_SOURCE_DIR}/src)
+add_test(NAME material_lifecycle_tests COMMAND test_material_lifecycle)

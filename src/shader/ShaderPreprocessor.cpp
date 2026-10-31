@@ -37,10 +37,19 @@ void Preprocessor::process(const std::vector<Token>& input, std::vector<Token>& 
             break;
         }
 
-        if (token.hash && token.type == TokenType::Punct && token.text == "#") {
-            /* Directive */
+        /* Check if we're in an active conditional branch */
+        bool in_active_branch = conditionals_.empty() || conditionals_.back().active;
+
+        /* Directive detection: token.hash is true for the token immediately after '#' */
+        if (token.hash && token.type == TokenType::Identifier) {
+            /* Directive - always process directives regardless of conditional state */
+            /* Remove the preceding '#' token from output if present */
+            if (!output.empty() && output.back().type == TokenType::Punct && output.back().text == "#") {
+                output.pop_back();
+            }
             handle_directive(input, index, output);
-        } else {
+        } else if (in_active_branch) {
+            /* Only output tokens when in an active conditional branch */
             /* Expand any macros in the token stream */
             std::vector<Token> expanded;
             std::size_t saved = index;
@@ -53,23 +62,17 @@ void Preprocessor::process(const std::vector<Token>& input, std::vector<Token>& 
                 output.push_back(token);
             }
             index = saved + 1;
+        } else {
+            /* In inactive conditional branch - skip token */
+            ++index;
         }
     }
 }
 
 void Preprocessor::handle_directive(const std::vector<Token>& input, std::size_t& index,
                                     std::vector<Token>& output) {
-    ++index;  /* skip '#' */
-
-    if (index >= input.size()) return;
-
+    /* index points to the directive name token (which has hash=true) */
     const Token& token = input[index];
-    if (token.type != TokenType::Identifier) {
-        diagnostics_.error(token.file, token.line, token.column, token.offset,
-                           "expected identifier after '#'");
-        return;
-    }
-
     const std::string& directive = token.text;
 
     if (directive == "define") {
@@ -141,10 +144,8 @@ void Preprocessor::handle_define(const std::vector<Token>& input, std::size_t& i
     Macro macro;
     macro.name = name_token.text;
 
-    bool function_like = false;
     if (index < input.size() && input[index].type == TokenType::Punct &&
         input[index].text == "(" && !input[index].line_start) {
-        function_like = true;
         macro.function_like = true;
         ++index; /* skip '(' */
 
@@ -221,11 +222,10 @@ void Preprocessor::handle_if(const std::vector<Token>& input, std::size_t& index
         value = (input[index].text == "true");
         ++index;
     } else {
-        bool ok = true;
         value = evaluate_condition(input, index) != 0;
     }
 
-    cond.active = cond.parent_active && (negate ? !value : value);
+    cond.active = cond.parent_active && value;
     cond.branch_taken = cond.active;
     conditionals_.push_back(std::move(cond));
 }
@@ -384,7 +384,6 @@ long long Preprocessor::evaluate_primary(const std::vector<Token>& tokens,
                 tokens[position].text == "(") {
                 ++position;
                 if (position < tokens.size() && tokens[position].type == TokenType::Identifier) {
-                    long long val = is_defined(tokens[position].text) ? 1 : 0;
                     ++position;
                 }
                 if (position < tokens.size() && tokens[position].type == TokenType::Punct &&

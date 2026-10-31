@@ -145,7 +145,7 @@ ShaderProgram Parser::parse(const std::vector<Token>& tokens, uint32_t source_fi
     return std::move(program_);
 }
 
-void Parser::parse_program(const std::vector<Token>& tokens, uint32_t source_file) {
+void Parser::parse_program(const std::vector<Token>&, uint32_t source_file) {
     (void)source_file;
     while (!check(TokenType::End)) {
         parse_declaration();
@@ -208,8 +208,15 @@ void Parser::parse_declaration() {
                 func.name = tokens_[position_].text;
                 func.return_type = type;
                 func.line = tokens_[position_].line;
-                parse_function(func);
+                consume(); /* consume function name */
+                /* Add placeholder function first so current_function_ index is valid */
                 program_.functions.push_back(std::move(func));
+                uint32_t func_index = static_cast<uint32_t>(program_.functions.size() - 1);
+                uint32_t saved_function = current_function_;
+                current_function_ = func_index;
+                /* Parse directly into the function in the vector */
+                parse_function();
+                current_function_ = saved_function;
                 return;
             }
         }
@@ -431,7 +438,7 @@ void Parser::parse_variable_declaration() {
     }
 }
 
-void Parser::parse_function(Function& func) {
+void Parser::parse_function() {
     expect(TokenType::Punct, "(");
 
     /* Parameters */
@@ -445,7 +452,7 @@ void Parser::parse_function(Function& func) {
         param.type = param_type;
         param.storage = StorageClass::Local;
 
-        func.params.push_back(std::move(param));
+        program_.functions[current_function_].params.push_back(std::move(param));
 
         if (!check(TokenType::Punct, ")")) expect(TokenType::Punct, ",");
     }
@@ -454,17 +461,10 @@ void Parser::parse_function(Function& func) {
     /* Function body */
     expect(TokenType::Punct, "{");
 
-    uint32_t saved_function = current_function_;
-    current_function_ = static_cast<uint32_t>(program_.functions.size());
-
-    std::vector<Stmt> body;
     while (!check(TokenType::Punct, "}") && !check(TokenType::End)) {
-        parse_statement(body);
+        parse_statement(program_.functions[current_function_].body);
     }
     expect(TokenType::Punct, "}");
-
-    func.body = std::move(body);
-    current_function_ = saved_function;
 }
 
 /* -----------------------------------------------------------------------
@@ -523,7 +523,8 @@ ShaderType Parser::parse_type() {
         }
     }
 
-    /* Default to float */
+    /* Unknown type - consume and default to float */
+    consume();
     return make_float();
 }
 
@@ -581,7 +582,6 @@ ShaderType Parser::parse_matrix_type() {
 }
 
 ShaderType Parser::parse_struct_type() {
-    const std::string& name = peek().text;
     consume();
     ShaderType t{};
     t.cls = TypeClass::Struct;
@@ -910,7 +910,6 @@ void Parser::parse_switch_stmt(std::vector<Stmt>& stmts) {
  * Expression parsing
  * --------------------------------------------------------------------- */
 uint32_t Parser::parse_expression(int precedence) {
-    uint32_t lhs = parse_unary_expr();
     return parse_binary_expr(precedence);
 }
 

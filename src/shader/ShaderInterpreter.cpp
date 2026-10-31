@@ -370,7 +370,11 @@ void Interpreter::execute_function(uint32_t func_index, const Value* args, Value
     }
 
     /* Execute body */
+    int stmt_count = 0;
     for (const auto& stmt : func.body) {
+        if (++stmt_count > 1000) {
+            return;  /* Prevent infinite loop */
+        }
         execute_stmt(stmt);
     }
 
@@ -383,6 +387,7 @@ void Interpreter::execute_function(uint32_t func_index, const Value* args, Value
 }
 
 void Interpreter::execute_stmt(const Stmt& stmt) {
+    if (++stmt_counter_ > 10000) return;
     switch (stmt.kind) {
         case StmtKind::Block:
             execute_block(stmt.body);
@@ -417,7 +422,9 @@ void Interpreter::execute_stmt(const Stmt& stmt) {
 }
 
 void Interpreter::execute_block(const std::vector<Stmt>& stmts) {
+    int stmt_count = 0;
     for (const auto& stmt : stmts) {
+        if (++stmt_count > 1000) return;
         execute_stmt(stmt);
     }
 }
@@ -484,6 +491,7 @@ void Interpreter::execute_switch(const Stmt& stmt) {
 }
 
 Value Interpreter::eval_expr(uint32_t expr_index) {
+    if (++stmt_counter_ > 10000) return Value{};
     if (expr_index >= program_.exprs.size()) return Value{};
     const Expr& expr = program_.exprs[expr_index];
 
@@ -648,8 +656,6 @@ Value Interpreter::eval_call(const Expr& expr) {
 
     uint32_t callee = expr.args[0];
     if (callee >= program_.exprs.size()) return Value{};
-
-    const Expr& callee_expr = program_.exprs[callee];
 
     if (expr.builtin != UINT32_MAX && expr.builtin < program_.builtin_names.size()) {
         /* Builtin function - dispatch by name */
@@ -1031,7 +1037,7 @@ Value Interpreter::eval_call(const Expr& expr) {
             return result;
         }
         if (name == "sign") {
-            if (!args.empty() && !args[0].empty()) result.push_back((args[0][0] > 0) - (args[0][0] < 0));
+            if (!args.empty() && !args[0].empty()) result.push_back(static_cast<float>((args[0][0] > 0) - (args[0][0] < 0)));
             return result;
         }
         if (name == "abs") {
@@ -1079,11 +1085,11 @@ Value Interpreter::eval_call(const Expr& expr) {
 
         /* Bit packing */
         if (name == "floatBitsToInt") {
-            if (!args.empty() && !args[0].empty()) result.push_back(*reinterpret_cast<int*>(&args[0][0]));
+            if (!args.empty() && !args[0].empty()) result.push_back(static_cast<float>(*reinterpret_cast<int*>(&args[0][0])));
             return result;
         }
         if (name == "floatBitsToUint") {
-            if (!args.empty() && !args[0].empty()) result.push_back(*reinterpret_cast<uint32_t*>(&args[0][0]));
+            if (!args.empty() && !args[0].empty()) result.push_back(static_cast<float>(*reinterpret_cast<uint32_t*>(&args[0][0])));
             return result;
         }
         if (name == "intBitsToFloat") {
@@ -1201,28 +1207,26 @@ Value Interpreter::read_push_constant(const Variable& var) {
     return v;
 }
 
-Value Interpreter::read_input(const Variable& var) {
+Value Interpreter::read_input(const Variable&) {
     Value v;
     /* Driver provides these */
     return v;
 }
 
-Value Interpreter::read_output(const Variable& var) {
+Value Interpreter::read_output(const Variable&) {
     Value v;
     return v;
 }
 
-void Interpreter::write_output(const Variable& var, const Value& value) {
+void Interpreter::write_output(const Variable&, const Value&) {
     /* Driver handles this */
 }
 
-void Interpreter::write_uniform_block(const UniformBlockResource& block,
-                                      const UniformBlock& ublock,
-                                      const Value& value) {
+void Interpreter::write_uniform_block(const UniformBlockResource&, const UniformBlock&, const Value&) {
     /* Not typically done in shaders */
 }
 
-Value Interpreter::sample_texture(uint32_t texture_index, const Value& uv, uint32_t lod) {
+Value Interpreter::sample_texture(uint32_t texture_index, const Value& uv, uint32_t) {
     if (!env_ || texture_index >= env_->textures.size()) return Value{0, 0, 0, 1};
 
     const auto& tex = env_->textures[texture_index];
@@ -1235,8 +1239,8 @@ Value Interpreter::sample_texture(uint32_t texture_index, const Value& uv, uint3
     u = builtin::clamp_f(u, 0.0f, 1.0f);
     v = builtin::clamp_f(v, 0.0f, 1.0f);
 
-    int ix = static_cast<int>(u * (tex.texture->width - 1));
-    int iy = static_cast<int>(v * (tex.texture->height - 1));
+    int ix = static_cast<int>(u * (static_cast<float>(tex.texture->width) - 1.0f));
+    int iy = static_cast<int>(v * (static_cast<float>(tex.texture->height) - 1.0f));
 
     const uint8_t* texels = static_cast<const uint8_t*>(tex.texture->pTexels);
     const uint8_t* pixel = texels + iy * tex.texture->rowPitch + ix * 4;
