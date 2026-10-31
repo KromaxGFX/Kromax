@@ -118,5 +118,3 @@ ctest --output-on-failure
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE)
-
-Copyright 2024-2026 Kromax GFX
