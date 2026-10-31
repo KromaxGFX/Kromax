@@ -57,8 +57,10 @@ cmake --build --preset debug
 ctest --output-on-failure
 
 # 4. Run examples
-./bin/kromax_example_00_enumerate.exe   # Enumerates software device
-./bin/kromax_example_03_triangle.exe    # 3D rotating triangle
+./bin/kromax_example_00_enumerate.exe     # Enumerates software device
+./bin/kromax_example_03_triangle.exe      # 3D rotating triangle
+./bin/kromax_example_05_shader_languages.exe  # GLSL/WGSL/KXSL compilation demo
+./bin/kromax_example_06_material_pbr.exe      # PBR material with textures demo
 ```
 
 ## Project Structure
@@ -71,8 +73,73 @@ src/
   shader/             # Compiler + Runtime (Phases B-C)
   material/           # Material system (Phase F)
 tests/unit/           # 17 test binaries (doctest)
-examples/             # 00_enumerate, 01_clear, 02_kms, 03_triangle, 04_compute
+tests/integration/    # 3 integration tests (shader langs, material, compute)
+examples/             # 00_enumerate, 01_clear, 02_kms, 03_triangle, 04_compute, 05_shader_languages, 06_material_pbr
 ```
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                        C11 Public API (include/kromax)              │
+├─────────────────────────────────────────────────────────────────────┤
+│  kxCreateInstance  kxCreateDevice  kxCreateShaderModuleFromSource  │
+│  kxCreateMaterial  kxCreatePipeline  kxCmdDraw  kxCmdDispatch      │
+└─────────────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     C++17 Internal Implementation                   │
+├─────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐              │
+│  │   Shader     │  │   Material   │  │   Driver     │              │
+│  │  Compiler    │  │   System     │  │  (Software)  │              │
+│  │              │  │              │  │              │              │
+│  │ • Lexer      │  │ • 6 slots    │  │ • Rasterizer │              │
+│  │ • Parser     │  │ • Params     │  │ • Interpreter│              │
+│  │ • IR Builder │  │ • Descriptor │  │ • Memory     │              │
+│  │ • Interpreter│  │   publishing │  │   management │              │
+│  │ • 60+Builtins│  │ • PBR shader │  │ • Descriptor │              │
+│  └──────────────┘  └──────────────┘  └──────────────┘              │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+## Shader Compilation Pipeline
+
+```text
+Source (GLSL/HLSL/WGSL/KXSL)
+        │
+        ▼
+┌───────────────────┐
+│  Lexer +          │  → Tokens
+│  Preprocessor     │     (#include, #define, #ifdef)
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│  Parser           │  → AST
+│  (recursive       │     (dialect-aware)
+│   descent)        │
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│  IR Builder       │  → SSA IR
+│  (typed instr.)   │     + reflection metadata
+└───────────────────┘
+        │
+        ▼
+┌───────────────────┐
+│  Shader Module    │  → Runtime object
+│  (holds IR +      │     (tree-walking
+│   metadata)       │      interpreter)
+└───────────────────┘
+```
+
+## Documentation
+
+- [SHADERS.md](SHADERS.md) — Shader system: languages, IR, builtins, API, reflection
+- [MATERIALS.md](MATERIALS.md) — Material system: PBR workflow, texture slots, parameters, descriptor sets
 
 ## Shader Language Support
 
@@ -125,3 +192,8 @@ ctest --output-on-failure
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE)
+
+## See Also
+
+- [SHADERS.md](SHADERS.md) — Shader system deep dive
+- [MATERIALS.md](MATERIALS.md) — Material system reference
