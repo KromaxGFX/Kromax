@@ -1,0 +1,4 @@
+# Example 05: Shader Languages
+add_executable(kromax_example_05_shader_languages main.cpp)
+target_link_libraries(kromax_example_05_shader_languages PRIVATE kromax)
+target_include_directories(kromax_example_05_shader_languages PRIVATE ${CMAKE_SOURCE_DIR}/include)
