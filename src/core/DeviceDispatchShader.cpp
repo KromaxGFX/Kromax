@@ -487,4 +487,25 @@ KxSamplerState Device::dispatch_default_sampler_state(void) {
     return state;
 }
 
+KxResult Device::dispatch_sample_texture(const KxBoundTexture* pTexture,
+                                          float u, float v,
+                                          float outColor[4]) {
+    return kxSampleTexture(pTexture, u, v, outColor);
+}
+
+KxResult Device::dispatch_sample_texture_grad(const KxBoundTexture* pTexture,
+                                               float u, float v,
+                                               float dudx, float dvdx,
+                                               float dudy, float dvdy,
+                                               float outColor[4]) {
+    return kxSampleTextureGrad(pTexture, u, v, dudx, dvdx, dudy, dvdy, outColor);
+}
+
+KxResult Device::dispatch_sample_texture_lod(const KxBoundTexture* pTexture,
+                                              float u, float v,
+                                              float lod,
+                                              float outColor[4]) {
+    return kxSampleTextureLod(pTexture, u, v, lod, outColor);
+}
+
 } /* namespace kx */

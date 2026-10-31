@@ -203,6 +203,12 @@ struct DeviceDispatch {
     KxResult (KX_CALL* generate_mipmaps)(
         KxDevice, KxImage);
     KxSamplerState (KX_CALL* default_sampler_state)(void);
+    KxResult (KX_CALL* sample_texture)(
+        const KxBoundTexture*, float, float, float[4]);
+    KxResult (KX_CALL* sample_texture_grad)(
+        const KxBoundTexture*, float, float, float, float, float, float, float[4]);
+    KxResult (KX_CALL* sample_texture_lod)(
+        const KxBoundTexture*, float, float, float, float[4]);
 };
 
 /* -----------------------------------------------------------------------

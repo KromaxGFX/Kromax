@@ -90,6 +90,9 @@ Device::Device(KxPhysicalDevice physical_device,
     dispatch_.create_texture_2d = &Device::dispatch_create_texture_2d;
     dispatch_.generate_mipmaps = &Device::dispatch_generate_mipmaps;
     dispatch_.default_sampler_state = &Device::dispatch_default_sampler_state;
+    dispatch_.sample_texture = &Device::dispatch_sample_texture;
+    dispatch_.sample_texture_grad = &Device::dispatch_sample_texture_grad;
+    dispatch_.sample_texture_lod = &Device::dispatch_sample_texture_lod;
 }
 
 SoftwareCommandBuffer* Device::find_command_buffer(KxCommandBuffer cb) const {

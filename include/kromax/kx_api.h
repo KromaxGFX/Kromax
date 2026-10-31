@@ -328,6 +328,21 @@ KX_API KxResult KX_CALL kxSampleTexture(
     float v,
     float outColor[4]);
 
+/* Sample texture with explicit derivatives for mip level selection */
+KX_API KxResult KX_CALL kxSampleTextureGrad(
+    const KxBoundTexture* pTexture,
+    float u, float v,
+    float dudx, float dvdx,
+    float dudy, float dvdy,
+    float outColor[4]);
+
+/* Sample texture with explicit LOD */
+KX_API KxResult KX_CALL kxSampleTextureLod(
+    const KxBoundTexture* pTexture,
+    float u, float v,
+    float lod,
+    float outColor[4]);
+
 /* =======================================================================
  * Render Pass functions
  * ======================================================================= */

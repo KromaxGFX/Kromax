@@ -227,6 +227,18 @@ public:
                                                 KxImage* pImage);
     static KxResult dispatch_generate_mipmaps(KxDevice device, KxImage image);
     static KxSamplerState dispatch_default_sampler_state(void);
+    static KxResult dispatch_sample_texture(const KxBoundTexture* pTexture,
+                                             float u, float v,
+                                             float outColor[4]);
+    static KxResult dispatch_sample_texture_grad(const KxBoundTexture* pTexture,
+                                                  float u, float v,
+                                                  float dudx, float dvdx,
+                                                  float dudy, float dvdy,
+                                                  float outColor[4]);
+    static KxResult dispatch_sample_texture_lod(const KxBoundTexture* pTexture,
+                                                 float u, float v,
+                                                 float lod,
+                                                 float outColor[4]);
 
     // Pipeline layout
     static KxResult dispatch_create_pipeline_layout(KxDevice device,
