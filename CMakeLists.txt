@@ -165,7 +165,16 @@ add_library(kromax
 
     src/layers/ValidationLayer.h
     src/layers/ValidationLayer.cpp
+
+    src/platform/Platform.h
 )
+
+# Platform-specific sources
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_sources(kromax PRIVATE src/platform/PlatformLinux.cpp)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
+    # TODO: PlatformWin32.cpp when Windows platform support is implemented
+endif()
 
 target_include_directories(kromax PRIVATE
     src
@@ -180,6 +189,11 @@ target_include_directories(kromax PRIVATE
     src/layers
     include/kromax
 )
+
+# Platform-specific include directories
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    target_include_directories(kromax PRIVATE src/platform)
+endif()
 
 # The library is built as a static archive by default; consumers must not
 # assume __declspec(dllimport) on Windows in that configuration.
