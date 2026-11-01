@@ -143,6 +143,40 @@ KX_DEFINE_HANDLE(KxShaderEnvironment)
 KX_DEFINE_HANDLE(KxMaterial)
 
 /* =======================================================================
+ * Object types for debug naming
+ * ======================================================================= */
+
+typedef enum KxObjectType {
+    KX_OBJECT_TYPE_UNKNOWN = 0,
+    KX_OBJECT_TYPE_INSTANCE = 1,
+    KX_OBJECT_TYPE_PHYSICAL_DEVICE = 2,
+    KX_OBJECT_TYPE_DEVICE = 3,
+    KX_OBJECT_TYPE_QUEUE = 4,
+    KX_OBJECT_TYPE_SEMAPHORE = 5,
+    KX_OBJECT_TYPE_COMMAND_BUFFER = 6,
+    KX_OBJECT_TYPE_FENCE = 7,
+    KX_OBJECT_TYPE_DEVICE_MEMORY = 8,
+    KX_OBJECT_TYPE_BUFFER = 9,
+    KX_OBJECT_TYPE_IMAGE = 10,
+    KX_OBJECT_TYPE_IMAGE_VIEW = 11,
+    KX_OBJECT_TYPE_SHADER_MODULE = 12,
+    KX_OBJECT_TYPE_PIPELINE_LAYOUT = 13,
+    KX_OBJECT_TYPE_PIPELINE = 14,
+    KX_OBJECT_TYPE_COMMAND_POOL = 15,
+    KX_OBJECT_TYPE_SAMPLER = 16,
+    KX_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT = 17,
+    KX_OBJECT_TYPE_DESCRIPTOR_POOL = 18,
+    KX_OBJECT_TYPE_DESCRIPTOR_SET = 19,
+    KX_OBJECT_TYPE_RENDER_PASS = 19,
+    KX_OBJECT_TYPE_FRAMEBUFFER = 20,
+    KX_OBJECT_TYPE_PIPELINE_CACHE = 20,
+    KX_OBJECT_TYPE_SWAPCHAIN_KHR = 1000000000,
+    KX_OBJECT_TYPE_SURFACE_KHR = 1000000001,
+    KX_OBJECT_TYPE_DEBUG_UTILS_MESSENGER_EXT = 1000128000,
+    KX_OBJECT_TYPE_MAX_ENUM = 0x7FFFFFFF
+} KxObjectType;
+
+/* =======================================================================
  * Allocation callbacks
  * ======================================================================= */
 
