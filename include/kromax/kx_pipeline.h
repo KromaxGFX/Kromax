@@ -101,6 +101,17 @@ typedef struct KxShaderModuleNativeCallbackInfo {
     KxVertexShaderCallback vertex_fn;
     KxFragmentShaderCallback fragment_fn;
     KxComputeShaderCallback compute_fn;
+    void (KX_CALL* geometry_fn)(const void* input, void* output, const void* push_constants);
+    void (KX_CALL* tesc_fn)(const void* input, void* output, const void* push_constants);
+    void (KX_CALL* tese_fn)(const void* input, void* output, const void* push_constants);
+    void (KX_CALL* task_fn)(const void* input, void* output, const void* push_constants);
+    void (KX_CALL* mesh_fn)(const void* input, void* output, const void* push_constants);
+    void (KX_CALL* raygen_fn)(const void* input, void* output, const void* push_constants);
+    void (KX_CALL* any_hit_fn)(const void* input, void* output, const void* push_constants);
+    void (KX_CALL* closest_hit_fn)(const void* input, void* output, const void* push_constants);
+    void (KX_CALL* miss_fn)(const void* input, void* output, const void* push_constants);
+    void (KX_CALL* intersection_fn)(const void* input, void* output, const void* push_constants);
+    void (KX_CALL* callable_fn)(const void* input, void* output, const void* push_constants);
     const void* push_constants;
     uint32_t push_constants_size;
 } KxShaderModuleNativeCallbackInfo;
@@ -256,6 +267,34 @@ typedef struct KxPipelineDepthStencilStateCreateInfo {
     float maxDepthBounds;
 } KxPipelineDepthStencilStateCreateInfo;
 
+/* Tessellation state */
+typedef struct KxPipelineTessellationStateCreateInfo {
+    KxStructureType sType;
+    const void* pNext;
+    uint32_t flags;
+    uint32_t patchControlPoints;
+} KxPipelineTessellationStateCreateInfo;
+
+/* Geometry shader state (output primitive type) */
+typedef struct KxPipelineGeometryStateCreateInfo {
+    KxStructureType sType;
+    const void* pNext;
+    uint32_t flags;
+    KxPrimitiveTopology outputTopology;
+    uint32_t maxVertices;
+    uint32_t invocations;
+} KxPipelineGeometryStateCreateInfo;
+
+/* Mesh/Task shader state */
+typedef struct KxPipelineMeshStateCreateInfo {
+    KxStructureType sType;
+    const void* pNext;
+    uint32_t flags;
+    uint32_t maxVertices;
+    uint32_t maxPrimitives;
+    uint32_t outputTopology;
+} KxPipelineMeshStateCreateInfo;
+
 /* Dynamic state */
 typedef enum KxDynamicState {
     KX_DYNAMIC_STATE_VIEWPORT = 0,
@@ -291,9 +330,23 @@ typedef struct KxPipelineCreateInfo {
     KxPipelineBindPoint bindPoint;
     KxPipelineLayout layout;
     KxShaderModule vertexShaderModule;
+    KxShaderModule tessellationControlShaderModule;
+    KxShaderModule tessellationEvaluationShaderModule;
+    KxShaderModule geometryShaderModule;
     KxShaderModule fragmentShaderModule;
+    KxShaderModule taskShaderModule;
+    KxShaderModule meshShaderModule;
+    KxShaderModule rayGenShaderModule;
+    KxShaderModule anyHitShaderModule;
+    KxShaderModule closestHitShaderModule;
+    KxShaderModule missShaderModule;
+    KxShaderModule intersectionShaderModule;
+    KxShaderModule callableShaderModule;
     KxShaderModule computeShaderModule;
     const KxPipelineVertexInputStateCreateInfo* pVertexInputState;
+    const KxPipelineTessellationStateCreateInfo* pTessellationState;
+    const KxPipelineGeometryStateCreateInfo* pGeometryState;
+    const KxPipelineMeshStateCreateInfo* pMeshState;
     const KxPipelineViewportStateCreateInfo* pViewportState;
     const KxPipelineRasterizationStateCreateInfo* pRasterizationState;
     const KxPipelineMultisampleStateCreateInfo* pMultisampleState;
