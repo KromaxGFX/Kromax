@@ -436,6 +436,24 @@ typedef struct KxSubmitInfo {
 typedef uint32_t KxPipelineStageFlags;
 #define KX_PIPELINE_STAGE_MAX_ENUM 0x7FFFFFFFu
 
+/* =======================================================================
+ * ARM64
+ * ======================================================================= */
+
+#define KX_STRUCTURE_TYPE_ARM_CPU_INFO 1000001000
+
+typedef struct KxArmCpuInfo {
+    KxStructureType sType;
+    void* pNext;
+    uint32_t features;
+    uint32_t implementer;
+    uint32_t variant;
+    uint32_t part;
+    uint32_t revision;
+    uint32_t cpuid;
+    char name[64];
+} KxArmCpuInfo;
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

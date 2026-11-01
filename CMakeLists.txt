@@ -15,6 +15,21 @@ option(KX_BUILD_EXAMPLES "Build examples" ON)
 option(KX_BUILD_TESTS "Build tests" ON)
 option(KX_DISABLE_EXCEPTIONS "Disable C++ exceptions in the internal implementation" OFF)
 option(KX_DISABLE_RTTI "Disable RTTI in the internal implementation" OFF)
+option(KX_BUILD_ARM64 "Build ARM64/NEON optimizations (enabled on ARM64)" ON)
+option(KX_BUILD_SVE "Build SVE/SVE2 optimizations (requires ARM64 SVE support)" OFF)
+
+# ARM64/NEON detection
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
+    set(KX_PLATFORM_ARM64 TRUE)
+    if(KX_BUILD_ARM64)
+        add_compile_options(-march=armv8-a+simd)
+        add_compile_definitions(KX_HAVE_NEON=1)
+    endif()
+    if(KX_BUILD_SVE)
+        add_compile_options(-march=armv8-a+sve)
+        add_compile_definitions(KX_HAVE_SVE=1)
+    endif()
+endif()
 
 # ---------------------------------------------------------------------------
 # C++ / C standard enforcement
@@ -56,6 +71,7 @@ add_library(kromax
     include/kromax/kx_validation.h
     include/kromax/kx_async_compute.h
     include/kromax/kx_descriptor_indexing.h
+    include/kromax/kx_arm.h
 
     src/core/Expected.h
     src/core/Allocator.h
@@ -191,6 +207,11 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     target_sources(kromax PRIVATE src/platform/PlatformLinux.cpp)
 elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     # TODO: PlatformWin32.cpp when Windows platform support is implemented
+endif()
+
+# ARM64/NEON math optimizations
+if(KX_PLATFORM_ARM64)
+    target_sources(kromax PRIVATE src/platform/ArmMath.cpp)
 endif()
 
 target_include_directories(kromax PRIVATE
