@@ -56,6 +56,38 @@
         "KX_SANITIZER_ADDRESS": "ON",
         "KX_SANITIZER_UNDEFINED": "ON"
       }
+    },
+    {
+      "name": "linux-debug",
+      "inherits": "base",
+      "displayName": "Linux Debug",
+      "description": "Linux debug build with Vulkan/X11/Wayland detection",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
+    },
+    {
+      "name": "linux-release",
+      "inherits": "base",
+      "displayName": "Linux Release",
+      "description": "Linux release build with Vulkan/X11/Wayland detection",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_C_COMPILER": "gcc",
+        "CMAKE_CXX_COMPILER": "g++"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      }
     }
   ],
   "buildPresets": [
@@ -78,6 +110,16 @@
       "name": "ci",
       "configurePreset": "ci",
       "displayName": "Build CI preset"
+    },
+    {
+      "name": "linux-debug",
+      "configurePreset": "linux-debug",
+      "displayName": "Build Linux debug"
+    },
+    {
+      "name": "linux-release",
+      "configurePreset": "linux-release",
+      "displayName": "Build Linux release"
     }
   ],
   "testPresets": [
@@ -85,6 +127,16 @@
       "name": "ci",
       "configurePreset": "ci",
       "displayName": "Run CI tests"
+    },
+    {
+      "name": "linux-debug",
+      "configurePreset": "linux-debug",
+      "displayName": "Run Linux debug tests"
+    },
+    {
+      "name": "linux-release",
+      "configurePreset": "linux-release",
+      "displayName": "Run Linux release tests"
     }
   ]
 }
