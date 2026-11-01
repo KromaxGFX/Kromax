@@ -54,6 +54,7 @@ add_library(kromax
     include/kromax/kx_thread_pool.h
     include/kromax/kx_pipeline_cache.h
     include/kromax/kx_validation.h
+    include/kromax/kx_async_compute.h
 
     src/core/Expected.h
     src/core/Allocator.h
