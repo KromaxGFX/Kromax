@@ -30,6 +30,7 @@
 #include "kx_pipeline_cache.h"
 #include "kx_validation.h"
 #include "kx_async_compute.h"
+#include "kx_descriptor_indexing.h"
 #include "kx_api.h"
 
 #endif /* KX_CORE_H */
