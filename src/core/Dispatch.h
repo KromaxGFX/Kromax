@@ -48,6 +48,19 @@ struct InstanceDispatch {
         KxInstance, uint32_t*, KxPhysicalDevice*);
     KxResult (KX_CALL* get_proc_addr)(
         KxInstance, const char*, KxPfnVoidFunction*);
+
+    // Surface creation
+    KxResult (KX_CALL* create_win32_surface)(
+        KxInstance, const KxWin32SurfaceCreateInfoKHR*,
+        const KxAllocationCallbacks*, KxSurfaceKHR*);
+    KxResult (KX_CALL* create_xcb_surface)(
+        KxInstance, const KxXcbSurfaceCreateInfoKHR*,
+        const KxAllocationCallbacks*, KxSurfaceKHR*);
+    KxResult (KX_CALL* create_wayland_surface)(
+        KxInstance, const KxWaylandSurfaceCreateInfoKHR*,
+        const KxAllocationCallbacks*, KxSurfaceKHR*);
+    void (KX_CALL* destroy_surface)(
+        KxInstance, KxSurfaceKHR, const KxAllocationCallbacks*);
 };
 
 /* -----------------------------------------------------------------------
@@ -156,6 +169,49 @@ struct DeviceDispatch {
         const KxAllocationCallbacks*, KxSampler*);
     void (KX_CALL* destroy_sampler)(
         KxDevice, KxSampler, const KxAllocationCallbacks*);
+
+    // Fence
+    KxResult (KX_CALL* create_fence)(
+        KxDevice, const KxFenceCreateInfo*,
+        const KxAllocationCallbacks*, KxFence*);
+    void (KX_CALL* destroy_fence)(
+        KxDevice, KxFence, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* wait_for_fences)(
+        KxDevice, uint32_t, const KxFence*, KxBool32, uint64_t);
+    KxResult (KX_CALL* reset_fences)(
+        KxDevice, uint32_t, const KxFence*);
+    KxResult (KX_CALL* get_fence_status)(KxDevice, KxFence);
+
+    // Semaphore
+    KxResult (KX_CALL* create_semaphore)(
+        KxDevice, const KxSemaphoreCreateInfo*,
+        const KxAllocationCallbacks*, KxSemaphore*);
+    void (KX_CALL* destroy_semaphore)(
+        KxDevice, KxSemaphore, const KxAllocationCallbacks*);
+
+    // Swapchain
+    KxResult (KX_CALL* create_swapchain)(
+        KxDevice, const KxSwapchainCreateInfoKHR*,
+        const KxAllocationCallbacks*, KxSwapchainKHR*);
+    void (KX_CALL* destroy_swapchain)(
+        KxDevice, KxSwapchainKHR, const KxAllocationCallbacks*);
+    KxResult (KX_CALL* acquire_next_image)(
+        KxDevice, KxSwapchainKHR, uint64_t, KxSemaphore, KxFence, uint32_t*);
+    KxResult (KX_CALL* queue_present)(
+        KxQueue, const KxPresentInfoKHR*);
+
+    // Surface
+    KxResult (KX_CALL* create_win32_surface)(
+        KxInstance, const KxWin32SurfaceCreateInfoKHR*,
+        const KxAllocationCallbacks*, KxSurfaceKHR*);
+    KxResult (KX_CALL* create_xcb_surface)(
+        KxInstance, const KxXcbSurfaceCreateInfoKHR*,
+        const KxAllocationCallbacks*, KxSurfaceKHR*);
+    KxResult (KX_CALL* create_wayland_surface)(
+        KxInstance, const KxWaylandSurfaceCreateInfoKHR*,
+        const KxAllocationCallbacks*, KxSurfaceKHR*);
+    void (KX_CALL* destroy_surface)(
+        KxInstance, KxSurfaceKHR, const KxAllocationCallbacks*);
 
     // Shader from source
     KxResult (KX_CALL* create_shader_module_from_source)(

@@ -404,4 +404,77 @@ void SoftwareDevice::destroy_sampler(KxSampler sampler,
     unregister_sampler(sampler);
 }
 
+/* Fence */
+KxResult SoftwareDevice::create_fence(const KxFenceCreateInfo* info,
+                                      const KxAllocationCallbacks* alloc,
+                                      KxFence* fence) {
+    (void)info; (void)alloc; (void)fence;
+    return KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+void SoftwareDevice::destroy_fence(KxFence fence,
+                                   const KxAllocationCallbacks* alloc) {
+    (void)fence; (void)alloc;
+}
+
+KxResult SoftwareDevice::wait_for_fences(uint32_t fence_count,
+                                         const KxFence* fences,
+                                         KxBool32 wait_all,
+                                         uint64_t timeout) {
+    (void)fence_count; (void)fences; (void)wait_all; (void)timeout;
+    return KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+KxResult SoftwareDevice::reset_fences(uint32_t fence_count,
+                                      const KxFence* fences) {
+    (void)fence_count; (void)fences;
+    return KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+KxResult SoftwareDevice::get_fence_status(KxFence fence) {
+    (void)fence;
+    return KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+/* Semaphore */
+KxResult SoftwareDevice::create_semaphore(const KxSemaphoreCreateInfo* info,
+                                          const KxAllocationCallbacks* alloc,
+                                          KxSemaphore* semaphore) {
+    (void)info; (void)alloc; (void)semaphore;
+    return KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+void SoftwareDevice::destroy_semaphore(KxSemaphore semaphore,
+                                       const KxAllocationCallbacks* alloc) {
+    (void)semaphore; (void)alloc;
+}
+
+/* Swapchain */
+KxResult SoftwareDevice::create_swapchain(const KxSwapchainCreateInfoKHR* info,
+                                          const KxAllocationCallbacks* alloc,
+                                          KxSwapchainKHR* swapchain) {
+    (void)info; (void)alloc; (void)swapchain;
+    return KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+void SoftwareDevice::destroy_swapchain(KxSwapchainKHR swapchain,
+                                       const KxAllocationCallbacks* alloc) {
+    (void)swapchain; (void)alloc;
+}
+
+KxResult SoftwareDevice::acquire_next_image(KxSwapchainKHR swapchain,
+                                            uint64_t timeout,
+                                            KxSemaphore semaphore,
+                                            KxFence fence,
+                                            uint32_t* image_index) {
+    (void)swapchain; (void)timeout; (void)semaphore; (void)fence; (void)image_index;
+    return KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+KxResult SoftwareDevice::queue_present(KxQueue queue,
+                                       const KxPresentInfoKHR* present_info) {
+    (void)queue; (void)present_info;
+    return KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
 } /* namespace kx */

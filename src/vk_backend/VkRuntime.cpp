@@ -202,6 +202,113 @@ void VkRuntime::destroyThreadPool(ThreadPool* threadPool) {
     (void)threadPool;
 }
 
+KxResult VkRuntime::createWin32Surface(Instance* instance,
+                                       const KxWin32SurfaceCreateInfoKHR* create_info,
+                                       const KxAllocationCallbacks* allocator,
+                                       KxSurfaceKHR* surface) {
+    (void)allocator;
+    if (!instance || !create_info || !surface) return KX_ERROR_INVALID_ARGUMENT;
+    if (!loader_.isLoaded()) return KX_ERROR_INITIALIZATION_FAILED;
+
+    auto* vkInstance = static_cast<VkInstanceImpl*>(instance);
+    auto& functions = loader_.getFunctionTable();
+
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+    if (!functions.vkCreateWin32SurfaceKHR) return KX_ERROR_EXTENSION_NOT_PRESENT;
+
+    VkWin32SurfaceCreateInfoKHR vk_info{};
+    vk_info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    vk_info.hinstance = create_info->hinstance;
+    vk_info.hwnd = create_info->hwnd;
+
+    VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
+    VkResult result = functions.vkCreateWin32SurfaceKHR(static_cast<VkInstance>(vkInstance->getHandle()), &vk_info, nullptr, &vk_surface);
+    if (result != VK_SUCCESS) return KX_ERROR_INITIALIZATION_FAILED;
+
+    *surface = reinterpret_cast<KxSurfaceKHR>(vk_surface);
+    return KX_SUCCESS;
+#else
+    (void)instance; (void)create_info; (void)surface;
+    return KX_ERROR_EXTENSION_NOT_PRESENT;
+#endif
+}
+
+KxResult VkRuntime::createXcbSurface(Instance* instance,
+                                     const KxXcbSurfaceCreateInfoKHR* create_info,
+                                     const KxAllocationCallbacks* allocator,
+                                     KxSurfaceKHR* surface) {
+    (void)allocator;
+    if (!instance || !create_info || !surface) return KX_ERROR_INVALID_ARGUMENT;
+    if (!loader_.isLoaded()) return KX_ERROR_INITIALIZATION_FAILED;
+
+    auto* vkInstance = static_cast<VkInstanceImpl*>(instance);
+    auto& functions = loader_.getFunctionTable();
+
+#if defined(VK_USE_PLATFORM_XCB_KHR)
+    if (!functions.vkCreateXcbSurfaceKHR) return KX_ERROR_EXTENSION_NOT_PRESENT;
+
+    VkXcbSurfaceCreateInfoKHR vk_info{};
+    vk_info.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+    vk_info.connection = create_info->connection;
+    vk_info.window = create_info->window;
+
+    VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
+    VkResult result = functions.vkCreateXcbSurfaceKHR(static_cast<VkInstance>(vkInstance->getHandle()), &vk_info, nullptr, &vk_surface);
+    if (result != VK_SUCCESS) return KX_ERROR_INITIALIZATION_FAILED;
+
+    *surface = reinterpret_cast<KxSurfaceKHR>(vk_surface);
+    return KX_SUCCESS;
+#else
+    (void)instance; (void)create_info; (void)surface;
+    return KX_ERROR_EXTENSION_NOT_PRESENT;
+#endif
+}
+
+KxResult VkRuntime::createWaylandSurface(Instance* instance,
+                                         const KxWaylandSurfaceCreateInfoKHR* create_info,
+                                         const KxAllocationCallbacks* allocator,
+                                         KxSurfaceKHR* surface) {
+    (void)allocator;
+    if (!instance || !create_info || !surface) return KX_ERROR_INVALID_ARGUMENT;
+    if (!loader_.isLoaded()) return KX_ERROR_INITIALIZATION_FAILED;
+
+    auto* vkInstance = static_cast<VkInstanceImpl*>(instance);
+    auto& functions = loader_.getFunctionTable();
+
+#if defined(VK_USE_PLATFORM_WAYLAND_KHR)
+    if (!functions.vkCreateWaylandSurfaceKHR) return KX_ERROR_EXTENSION_NOT_PRESENT;
+
+    VkWaylandSurfaceCreateInfoKHR vk_info{};
+    vk_info.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
+    vk_info.display = create_info->display;
+    vk_info.surface = create_info->surface;
+
+    VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
+    VkResult result = functions.vkCreateWaylandSurfaceKHR(static_cast<VkInstance>(vkInstance->getHandle()), &vk_info, nullptr, &vk_surface);
+    if (result != VK_SUCCESS) return KX_ERROR_INITIALIZATION_FAILED;
+
+    *surface = reinterpret_cast<KxSurfaceKHR>(vk_surface);
+    return KX_SUCCESS;
+#else
+    (void)instance; (void)create_info; (void)surface;
+    return KX_ERROR_EXTENSION_NOT_PRESENT;
+#endif
+}
+
+void VkRuntime::destroySurface(Instance* instance,
+                               KxSurfaceKHR surface,
+                               const KxAllocationCallbacks* allocator) {
+    if (!instance || !surface) return;
+    if (!loader_.isLoaded()) return;
+
+    auto* vkInstance = static_cast<VkInstanceImpl*>(instance);
+    auto& functions = loader_.getFunctionTable();
+
+    if (functions.vkDestroySurfaceKHR) {
+        functions.vkDestroySurfaceKHR(static_cast<VkInstance>(vkInstance->getHandle()), reinterpret_cast<VkSurfaceKHR>(surface), nullptr);
+    }
+}
+
 // ============================================================================
 // Backend registration
 // ============================================================================

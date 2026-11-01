@@ -77,6 +77,23 @@ public:
     KxResult compileShader(const ShaderSourceCreateInfo& info, ShaderModule** outModule) override;
     KxResult compileShaderToSPIRV(const ShaderSourceCreateInfo& info, std::vector<uint32_t>* outSpirv) override;
 
+    // Surface creation
+    KxResult createWin32Surface(Instance* instance,
+                                const KxWin32SurfaceCreateInfoKHR* create_info,
+                                const KxAllocationCallbacks* allocator,
+                                KxSurfaceKHR* surface) override;
+    KxResult createXcbSurface(Instance* instance,
+                              const KxXcbSurfaceCreateInfoKHR* create_info,
+                              const KxAllocationCallbacks* allocator,
+                              KxSurfaceKHR* surface) override;
+    KxResult createWaylandSurface(Instance* instance,
+                                  const KxWaylandSurfaceCreateInfoKHR* create_info,
+                                  const KxAllocationCallbacks* allocator,
+                                  KxSurfaceKHR* surface) override;
+    void destroySurface(Instance* instance,
+                        KxSurfaceKHR surface,
+                        const KxAllocationCallbacks* allocator) override;
+
     bool isExtensionSupported(const char* extensionName) const noexcept override;
     KxResult getExtensionProperties(uint32_t* pPropertyCount, void* pProperties) override;
 

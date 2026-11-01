@@ -9,10 +9,13 @@
 
 #include "VkLoader.h"
 #include "VkShaderModule.h"
+#include "VkDescriptor.h"
 #include <kx_core.h>
+#include <kx_pipeline.h>
 
 #include <vector>
 #include <string>
+#include <array>
 
 namespace kx {
 
@@ -76,6 +79,26 @@ private:
     VkPipelineLayout layout_ = VK_NULL_HANDLE;
     VkDevice device_ = VK_NULL_HANDLE;
     bool is_compute_ = false;
+    
+    // Pipeline create info components for graphics
+    std::vector<VkPipelineShaderStageCreateInfo> shader_stages_;
+    VkPipelineVertexInputStateCreateInfo vertex_input_state_{};
+    VkPipelineInputAssemblyStateCreateInfo input_assembly_state_{};
+    VkPipelineTessellationStateCreateInfo tessellation_state_{};
+    VkPipelineViewportStateCreateInfo viewport_state_{};
+    VkPipelineRasterizationStateCreateInfo rasterization_state_{};
+    VkPipelineMultisampleStateCreateInfo multisample_state_{};
+    VkPipelineDepthStencilStateCreateInfo depth_stencil_state_{};
+    VkPipelineColorBlendStateCreateInfo color_blend_state_{};
+    VkPipelineDynamicStateCreateInfo dynamic_state_{};
+    
+    // Dynamic state arrays
+    std::vector<VkDynamicState> dynamic_states_;
+    std::vector<VkViewport> viewports_;
+    std::vector<VkRect2D> scissors_;
+    std::vector<VkPipelineColorBlendAttachmentState> color_blend_attachments_;
+    std::vector<VkVertexInputBindingDescription> vertex_bindings_;
+    std::vector<VkVertexInputAttributeDescription> vertex_attributes_;
 };
 
 } // namespace kx

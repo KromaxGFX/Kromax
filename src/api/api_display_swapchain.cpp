@@ -48,41 +48,32 @@ KxResult KX_CALL kxCreateSwapchainEXT(KxDevice dev,
                                      const KxAllocationCallbacks* PA,
                                      KxSwapchainEXT* pS)
 {
-    if (!dev || !pCI || !pS) return KX_ERROR_INVALID_ARGUMENT;
-    kx::SoftwareDisplay* D = g_displays.empty() ? nullptr : g_displays[0].get();
-    if (!D) return KX_ERROR_FEATURE_NOT_PRESENT;
-    kx::SwapchainState S{};
-    S.width = pCI->width; S.height = pCI->height;
-    S.format = pCI->imageFormat; S.presentMode = pCI->presentMode;
-    S.clipped = pCI->clipped; S.imageCount = 1;
-    g_swapchain_states.push_back(S);
-    // Create the swapchain image
-    KxImageCreateInfo II{.sType = KX_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-        .format = pCI->imageFormat, .width = pCI->width, .height = pCI->height,
-        .depth = 1, .mipLevels = 1, .arrayLayers = 1,
-        .samples = (KxSampleCountFlags)1, .usage = pCI->imageUsage,
-        .sharingModeExclusive = KX_TRUE};
-    KxResult r = kxCreateImage(dev, &II, PA, &D->swapchain_image);
-    if (r != KX_SUCCESS) { g_swapchain_states.pop_back(); return r; }
-    S.image = D->swapchain_image;
-    *pS = reinterpret_cast<KxSwapchainEXT>(&g_swapchain_states.back());
-    printf("[kromax] SwapchainEXT created\n");
-    return KX_SUCCESS;
+    kx::Device* device = kx::find_device_locked(dev);
+    if (!device) return KX_ERROR_INVALID_ARGUMENT;
+    if (!device->dispatch() || !device->dispatch()->create_swapchain)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    // Note: KxSwapchainCreateInfoEXT needs to be converted to KxSwapchainCreateInfoKHR
+    // For now, use the Vulkan-specific create_swapchain if available
+    return device->dispatch()->create_swapchain(dev, 
+        reinterpret_cast<const KxSwapchainCreateInfoKHR*>(pCI), PA, 
+        reinterpret_cast<KxSwapchainKHR*>(pS));
 }
 
-void KX_CALL kxDestroySwapchainEXT(KxDevice, KxSwapchainEXT, const KxAllocationCallbacks*) {}
+void KX_CALL kxDestroySwapchainEXT(KxDevice dev, KxSwapchainEXT s, const KxAllocationCallbacks* PA)
+{
+    kx::Device* device = kx::find_device_locked(dev);
+    if (!device) return;
+    if (device->dispatch() && device->dispatch()->destroy_swapchain)
+        device->dispatch()->destroy_swapchain(dev, reinterpret_cast<KxSwapchainKHR>(s), PA);
+}
 
 KxResult KX_CALL kxGetSwapchainImagesEXT(KxDevice dev,
                                           KxSwapchainEXT s,
                                           uint32_t* pIC, KxImage* pI)
 {
-    if (!dev || !pIC || !pI || !s) return KX_ERROR_INVALID_ARGUMENT;
-    uintptr_t h = reinterpret_cast<uintptr_t>(s);
-    auto it = std::find_if(g_swapchain_states.begin(), g_swapchain_states.end(),
-        [h](const kx::SwapchainState& v) { return reinterpret_cast<uintptr_t>(&v) == h; });
-    if (it != g_swapchain_states.end()) { *pIC = it->imageCount; if (pI) pI[0] = it->image; }
-    else { *pIC = 0; }
-    return KX_SUCCESS;
+    (void)dev; (void)s; (void)pIC; (void)pI;
+    // For Vulkan, this is handled by the swapchain object directly
+    return KX_ERROR_FEATURE_NOT_PRESENT;
 }
 
 KxResult KX_CALL kxAcquireNextImageEXT(KxDevice dev,
@@ -92,10 +83,13 @@ KxResult KX_CALL kxAcquireNextImageEXT(KxDevice dev,
                                        KxFence fence,
                                        uint32_t* pII)
 {
-    (void)dev; (void)timeout; (void)semaphore; (void)fence;
-    if (!swapchain || !pII) return KX_ERROR_INVALID_ARGUMENT;
-    *pII = 0;
-    return KX_SUCCESS;
+    kx::Device* device = kx::find_device_locked(dev);
+    if (!device) return KX_ERROR_INVALID_ARGUMENT;
+    if (!device->dispatch() || !device->dispatch()->acquire_next_image)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return device->dispatch()->acquire_next_image(dev, 
+        reinterpret_cast<KxSwapchainKHR>(swapchain), timeout,
+        semaphore, fence, pII);
 }
 
 KxResult KX_CALL kxQueuePresentEXT(KxQueue queue,

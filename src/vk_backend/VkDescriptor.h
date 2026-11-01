@@ -76,6 +76,11 @@ public:
     VkDescriptorSetImpl(VkDescriptorSetImpl&& other) noexcept;
     VkDescriptorSetImpl& operator=(VkDescriptorSetImpl&& other) noexcept;
 
+    bool initialize(VkDevice device) {
+        device_ = device;
+        return true;
+    }
+
     // Update descriptor set contents
     void update(VkFunctionTable& functions,
                 uint32_t write_count,
@@ -86,6 +91,7 @@ public:
     VkDescriptorSet handle() const noexcept { return set_; }
     VkDescriptorSetLayout layout() const noexcept { return layout_; }
     VkDescriptorPool pool() const noexcept { return pool_; }
+    VkDevice device() const noexcept { return device_; }
 
     void set_layout(VkDescriptorSetLayout l) noexcept { layout_ = l; }
     void set_pool(VkDescriptorPool p) noexcept { pool_ = p; }
@@ -94,6 +100,7 @@ private:
     VkDescriptorSet set_ = VK_NULL_HANDLE;
     VkDescriptorSetLayout layout_ = VK_NULL_HANDLE;
     VkDescriptorPool pool_ = VK_NULL_HANDLE;
+    VkDevice device_ = VK_NULL_HANDLE;
 };
 
 } // namespace kx

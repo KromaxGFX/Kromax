@@ -58,6 +58,45 @@ public:
     void record_end_render_pass();
     void record_next_subpass(KxSubpassContents contents);
 
+    // Dynamic Rendering (VK_KHR_dynamic_rendering)
+    void record_begin_rendering(const KxRenderingInfoKHR* pRenderingInfo);
+    void record_end_rendering();
+
+    // Synchronization 2 (VK_KHR_synchronization2)
+    void record_pipeline_barrier2(const KxDependencyInfoKHR* pDependencyInfo);
+    void record_write_timestamp2(KxPipelineStageFlags2KHR stage, KxQueryPool queryPool, uint32_t query);
+    void record_set_event2(KxEvent event, const KxDependencyInfoKHR* pDependencyInfo);
+    void record_reset_event2(KxEvent event, KxPipelineStageFlags2KHR stageMask);
+    void record_wait_events2(uint32_t eventCount, const KxEvent* pEvents, const KxDependencyInfoKHR* pDependencyInfos);
+
+    // Copy Commands v2 (VK_KHR_copy_commands2)
+    void record_copy_buffer2(const void* pCopyBufferInfo);
+    void record_copy_image2(const void* pCopyImageInfo);
+    void record_blit_image2(const void* pBlitImageInfo);
+    void record_copy_buffer_to_image2(const void* pCopyBufferToImageInfo);
+    void record_copy_image_to_buffer2(const void* pCopyImageToBufferInfo);
+    void record_resolve_image2(const void* pResolveImageInfo);
+
+    // Extended Dynamic State 3 (VK_EXT_extended_dynamic_state3)
+    void record_set_depth_clamp_enable(KxBool32 depthClampEnable);
+    void record_set_polygon_mode(KxPolygonMode polygonMode);
+    void record_set_rasterization_samples(KxSampleCountFlagBits rasterizationSamples);
+    void record_set_sample_mask(KxSampleMask sampleMask);
+    void record_set_alpha_to_coverage_enable(KxBool32 alphaToCoverageEnable);
+    void record_set_alpha_to_one_enable(KxBool32 alphaToOneEnable);
+    void record_set_logic_op_enable(KxBool32 logicOpEnable);
+    void record_set_color_blend_enable(uint32_t firstAttachment, uint32_t attachmentCount, const KxBool32* pColorBlendEnables);
+    void record_set_color_blend_equation(uint32_t firstAttachment, uint32_t attachmentCount, const void* pColorBlendEquations);
+    void record_set_color_write_mask(uint32_t firstAttachment, uint32_t attachmentCount, const KxColorComponentFlags* pColorWriteMasks);
+    void record_set_tessellation_domain_origin(KxTessellationDomainOriginKHR domainOrigin);
+    void record_set_rasterization_stream(uint32_t rasterizationStream);
+    void record_set_conservative_rasterization_mode(KxConservativeRasterizationModeEXT conservativeRasterizationMode);
+    void record_set_extra_primitive_overestimation_size(float extraPrimitiveOverestimationSize);
+    void record_set_depth_clip_enable(KxBool32 depthClipEnable);
+    void record_set_depth_clip_negative_one_to_one(KxBool32 negativeOneToOne);
+    void record_set_viewport_w_scaling_enable_nv(KxBool32 viewportWScalingEnable);
+    void record_set_viewport_swizzle_nv(uint32_t firstViewport, uint32_t viewportCount, const void* pViewportSwizzles);
+
     // Render pass state
     bool in_render_pass() const noexcept { return in_render_pass_; }
     uint32_t current_subpass() const noexcept { return current_subpass_; }

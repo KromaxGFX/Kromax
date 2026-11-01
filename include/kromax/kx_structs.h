@@ -419,6 +419,7 @@ typedef struct KxSemaphoreCreateInfo {
     KxStructureType sType;
     const void* pNext;
     KxSemaphoreCreateFlags flags;
+    uint64_t initialValue;  // Para timeline semaphores (0 = binary semaphore)
 } KxSemaphoreCreateInfo;
 
 typedef struct KxSubmitInfo {
@@ -435,6 +436,173 @@ typedef struct KxSubmitInfo {
 
 typedef uint32_t KxPipelineStageFlags;
 #define KX_PIPELINE_STAGE_MAX_ENUM 0x7FFFFFFFu
+
+/* =======================================================================
+ * Dynamic Rendering (VK_KHR_dynamic_rendering)
+ * ======================================================================= */
+
+#define KX_STRUCTURE_TYPE_RENDERING_INFO_KHR        1000044000
+#define KX_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR 1000044001
+
+typedef uint32_t KxRenderingFlags;
+#define KX_RENDERING_CONTENTS_SECONDARY_COMMAND_BUFFERS_BIT 0x00000001
+#define KX_RENDERING_SUSPENDING_BIT                     0x00000002
+#define KX_RENDERING_RESUMING_BIT                       0x00000004
+#define KX_RENDERING_MAX_ENUM                           0x7FFFFFFF
+
+typedef struct KxRenderingAttachmentInfoKHR {
+    KxStructureType sType;
+    const void* pNext;
+    KxImageView imageView;
+    KxImageLayout imageLayout;
+    KxResolveModeFlagBits resolveMode;
+    KxImageView resolveImageView;
+    KxImageLayout resolveImageLayout;
+    KxAttachmentLoadOp loadOp;
+    KxAttachmentStoreOp storeOp;
+    KxClearValue clearValue;
+} KxRenderingAttachmentInfoKHR;
+
+typedef struct KxRenderingInfoKHR {
+    KxStructureType sType;
+    const void* pNext;
+    KxRenderingFlags flags;
+    KxRect2D renderArea;
+    uint32_t layerCount;
+    uint32_t viewMask;
+    uint32_t colorAttachmentCount;
+    const KxRenderingAttachmentInfoKHR* pColorAttachments;
+    const KxRenderingAttachmentInfoKHR* pDepthAttachment;
+    const KxRenderingAttachmentInfoKHR* pStencilAttachment;
+} KxRenderingInfoKHR;
+
+/* =======================================================================
+ * Synchronization 2 (VK_KHR_synchronization2)
+ * ======================================================================= */
+
+#define KX_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR              1000314000
+#define KX_STRUCTURE_TYPE_MEMORY_BARRIER_2_KHR             1000314001
+#define KX_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR      1000314002
+#define KX_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2_KHR       1000314003
+#define KX_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO_KHR        1000314004
+#define KX_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO_KHR   1000314005
+#define KX_STRUCTURE_TYPE_SUBMIT_INFO_2_KHR                1000314006
+
+typedef uint64_t KxPipelineStageFlags2KHR;
+#define KX_PIPELINE_STAGE_2_TOP_OF_PIPE_BIT_KHR          0x00000001
+#define KX_PIPELINE_STAGE_2_DRAW_INDIRECT_BIT_KHR        0x00000002
+#define KX_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR         0x00000004
+#define KX_PIPELINE_STAGE_2_VERTEX_SHADER_BIT_KHR        0x00000008
+#define KX_PIPELINE_STAGE_2_TESSELLATION_CONTROL_SHADER_BIT_KHR 0x00000010
+#define KX_PIPELINE_STAGE_2_TESSELLATION_EVALUATION_SHADER_BIT_KHR 0x00000020
+#define KX_PIPELINE_STAGE_2_GEOMETRY_SHADER_BIT_KHR      0x00000040
+#define KX_PIPELINE_STAGE_2_FRAGMENT_SHADER_BIT_KHR      0x00000080
+#define KX_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT_KHR 0x00000100
+#define KX_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT_KHR  0x00000200
+#define KX_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT_KHR 0x00000400
+#define KX_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR       0x00000800
+#define KX_PIPELINE_STAGE_2_ALL_TRANSFER_BIT_KHR         0x00001000
+#define KX_PIPELINE_STAGE_2_ALL_GRAPHICS_BIT_KHR         0x00002000
+#define KX_PIPELINE_STAGE_2_ALL_COMMANDS_BIT_KHR         0x00004000
+#define KX_PIPELINE_STAGE_2_NONE_KHR                     0x00008000
+#define KX_PIPELINE_STAGE_2_TRANSFORM_FEEDBACK_BIT_EXT   0x01000000
+#define KX_PIPELINE_STAGE_2_CONDITIONAL_RENDERING_BIT_EXT 0x02000000
+#define KX_PIPELINE_STAGE_2_COMMAND_PREPROCESS_BIT_NV    0x04000000
+#define KX_PIPELINE_STAGE_2_FRAGMENT_SHADING_RATE_BIT_KHR 0x08000000
+#define KX_PIPELINE_STAGE_2_ACCELERATION_STRUCTURE_BUILD_BIT_KHR 0x10000000
+#define KX_PIPELINE_STAGE_2_RAY_TRACING_SHADER_BIT_KHR   0x20000000
+#define KX_PIPELINE_STAGE_2_MAX_ENUM_KHR                 0x7FFFFFFF
+
+typedef uint32_t KxAccessFlags2KHR;
+#define KX_ACCESS_2_INDIRECT_COMMAND_READ_BIT_KHR        0x00000001
+#define KX_ACCESS_2_INDEX_READ_BIT_KHR                   0x00000002
+#define KX_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT_KHR        0x00000004
+#define KX_ACCESS_2_UNIFORM_READ_BIT_KHR                 0x00000008
+#define KX_ACCESS_2_SHADER_READ_BIT_KHR                  0x00000010
+#define KX_ACCESS_2_SHADER_WRITE_BIT_KHR                 0x00000020
+#define KX_ACCESS_2_COLOR_ATTACHMENT_READ_BIT_KHR        0x00000040
+#define KX_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT_KHR       0x00000080
+#define KX_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT_KHR 0x00000100
+#define KX_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT_KHR 0x00000200
+#define KX_ACCESS_2_TRANSFER_READ_BIT_KHR                0x00000400
+#define KX_ACCESS_2_TRANSFER_WRITE_BIT_KHR               0x00000800
+#define KX_ACCESS_2_HOST_READ_BIT_KHR                    0x00001000
+#define KX_ACCESS_2_HOST_WRITE_BIT_KHR                   0x00002000
+#define KX_ACCESS_2_MEMORY_READ_BIT_KHR                  0x00004000
+#define KX_ACCESS_2_MEMORY_WRITE_BIT_KHR                 0x00008000
+#define KX_ACCESS_2_NONE_KHR                             0x0000FFFF
+#define KX_ACCESS_2_MAX_ENUM_KHR                         0x7FFFFFFF
+
+typedef struct KxDependencyInfoKHR {
+    KxStructureType sType;
+    const void* pNext;
+    KxDependencyFlags dependencyFlags;
+    uint32_t memoryBarrierCount;
+    const struct KxMemoryBarrier2KHR* pMemoryBarriers;
+    uint32_t bufferMemoryBarrierCount;
+    const struct KxBufferMemoryBarrier2KHR* pBufferMemoryBarriers;
+    uint32_t imageMemoryBarrierCount;
+    const struct KxImageMemoryBarrier2KHR* pImageMemoryBarriers;
+} KxDependencyInfoKHR;
+
+typedef struct KxMemoryBarrier2KHR {
+    KxStructureType sType;
+    const void* pNext;
+    KxAccessFlags2KHR srcAccessMask;
+    KxAccessFlags2KHR dstAccessMask;
+} KxMemoryBarrier2KHR;
+
+typedef struct KxBufferMemoryBarrier2KHR {
+    KxStructureType sType;
+    const void* pNext;
+    KxAccessFlags2KHR srcAccessMask;
+    KxAccessFlags2KHR dstAccessMask;
+    KxBuffer srcBuffer;
+    KxBuffer dstBuffer;
+    uint64_t srcOffset;
+    uint64_t dstOffset;
+    uint64_t size;
+} KxBufferMemoryBarrier2KHR;
+
+typedef struct KxImageMemoryBarrier2KHR {
+    KxStructureType sType;
+    const void* pNext;
+    KxAccessFlags2KHR srcAccessMask;
+    KxAccessFlags2KHR dstAccessMask;
+    KxImageLayout oldLayout;
+    KxImageLayout newLayout;
+    KxImage srcImage;
+    KxImage dstImage;
+    KxImageSubresourceRange subresourceRange;
+} KxImageMemoryBarrier2KHR;
+
+typedef struct KxSemaphoreSubmitInfoKHR {
+    KxStructureType sType;
+    const void* pNext;
+    KxSemaphore semaphore;
+    uint64_t value;
+    KxPipelineStageFlags2KHR stageMask;
+    uint32_t deviceIndex;
+} KxSemaphoreSubmitInfoKHR;
+
+typedef struct KxCommandBufferSubmitInfoKHR {
+    KxStructureType sType;
+    const void* pNext;
+    KxCommandBuffer commandBuffer;
+    uint32_t deviceMask;
+} KxCommandBufferSubmitInfoKHR;
+
+typedef struct KxSubmitInfo2KHR {
+    KxStructureType sType;
+    const void* pNext;
+    KxSubmitFlags flags;
+    uint32_t waitSemaphoreInfoCount;
+    const KxSemaphoreSubmitInfoKHR* pWaitSemaphoreInfos;
+    uint32_t commandBufferInfoCount;
+    const KxCommandBufferSubmitInfoKHR* pCommandBufferInfos;
+    uint32_t signalSemaphoreInfoCount;
+    const KxSemaphoreSubmitInfoKHR* pSignalSemaphoreInfos;
+} KxSubmitInfo2KHR;
 
 /* =======================================================================
  * ARM64

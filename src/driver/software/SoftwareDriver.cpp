@@ -66,4 +66,30 @@ SoftwareDriver::create_device(PhysicalDevice* physical_device,
     return std::unique_ptr<IDriverDevice>(std::make_unique<SoftwareDevice>(physical_device));
 }
 
+KxResult SoftwareDriver::create_win32_surface(Instance* /*instance*/,
+                                              const KxWin32SurfaceCreateInfoKHR* /*create_info*/,
+                                              const KxAllocationCallbacks* /*allocator*/,
+                                              KxSurfaceKHR* /*surface*/) {
+    return KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+KxResult SoftwareDriver::create_xcb_surface(Instance* /*instance*/,
+                                            const KxXcbSurfaceCreateInfoKHR* /*create_info*/,
+                                            const KxAllocationCallbacks* /*allocator*/,
+                                            KxSurfaceKHR* /*surface*/) {
+    return KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+KxResult SoftwareDriver::create_wayland_surface(Instance* /*instance*/,
+                                                const KxWaylandSurfaceCreateInfoKHR* /*create_info*/,
+                                                const KxAllocationCallbacks* /*allocator*/,
+                                                KxSurfaceKHR* /*surface*/) {
+    return KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+void SoftwareDriver::destroy_surface(Instance* /*instance*/,
+                                     KxSurfaceKHR /*surface*/,
+                                     const KxAllocationCallbacks* /*allocator*/) {
+}
+
 } /* namespace kx */

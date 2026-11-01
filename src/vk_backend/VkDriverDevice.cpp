@@ -342,40 +342,6 @@ void VkDriverDevice::free_command_buffers(KxCommandPool command_pool,
     }
 }
 
-KxResult VkDriverDevice::begin_command_buffer(KxCommandBuffer command_buffer,
-                                              const KxCommandBufferBeginInfo* begin_info) {
-    if (!command_buffer) return KX_ERROR_INVALID_ARGUMENT;
-
-    auto* cmd = find_vk_command_buffer(command_buffer);
-    if (!cmd) return KX_ERROR_INVALID_ARGUMENT;
-
-    auto& funcs = functions();
-
-    VkCommandBufferBeginInfo vk_info{};
-    vk_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    vk_info.flags = static_cast<VkCommandBufferUsageFlags>(begin_info->flags);
-    vk_info.pInheritanceInfo = nullptr; // TODO: Support secondary command buffers
-
-    VkResult result = funcs.vkBeginCommandBuffer(cmd->handle(), &vk_info);
-    if (result == VK_SUCCESS) {
-        cmd->set_recording(true);
-    }
-    return result == VK_SUCCESS ? KX_SUCCESS : KX_ERROR_FEATURE_NOT_PRESENT;
-}
-
-KxResult VkDriverDevice::end_command_buffer(KxCommandBuffer command_buffer) {
-    if (!command_buffer) return KX_ERROR_INVALID_ARGUMENT;
-
-    auto* cmd = find_vk_command_buffer(command_buffer);
-    if (!cmd) return KX_ERROR_INVALID_ARGUMENT;
-
-    auto& funcs = functions();
-    VkResult result = funcs.vkEndCommandBuffer(cmd->handle());
-    if (result == VK_SUCCESS) {
-        cmd->set_recording(false);
-    }
-    return result == VK_SUCCESS ? KX_SUCCESS : KX_ERROR_FEATURE_NOT_PRESENT;
-}
 
 // ============================================================================
 // Queue Operations
@@ -415,6 +381,409 @@ KxResult VkDriverDevice::device_wait_idle() {
     auto& funcs = functions();
     return funcs.vkDeviceWaitIdle(static_cast<VkDevice>(vk_device_->getHandle())) == VK_SUCCESS
         ? KX_SUCCESS : KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+// ============================================================================
+// Command Buffer Recording
+// ============================================================================
+
+KxResult VkDriverDevice::begin_command_buffer(KxCommandBuffer command_buffer,
+                                              const KxCommandBufferBeginInfo* begin_info) {
+    if (!command_buffer) return KX_ERROR_INVALID_ARGUMENT;
+    if (!begin_info) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return KX_ERROR_INVALID_ARGUMENT;
+
+    return cmd->begin(begin_info) ? KX_SUCCESS : KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+KxResult VkDriverDevice::end_command_buffer(KxCommandBuffer command_buffer) {
+    if (!command_buffer) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return KX_ERROR_INVALID_ARGUMENT;
+
+    return cmd->end() ? KX_SUCCESS : KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+KxResult VkDriverDevice::reset_command_buffer(KxCommandBuffer command_buffer,
+                                              KxCommandBufferResetFlags flags) {
+    (void)flags;
+    if (!command_buffer) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return KX_ERROR_INVALID_ARGUMENT;
+
+    return cmd->reset() ? KX_SUCCESS : KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+void VkDriverDevice::cmd_begin_render_pass(KxCommandBuffer command_buffer,
+                                           const KxRenderPassBeginInfo* render_pass_begin,
+                                           KxSubpassContents contents) {
+    if (!command_buffer || !render_pass_begin) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    auto* rp = find_vk_render_pass(render_pass_begin->renderPass);
+    auto* fb = find_vk_framebuffer(render_pass_begin->framebuffer);
+    if (!rp || !fb) return;
+
+    cmd->cmd_begin_render_pass(rp->handle(), fb->handle(), render_pass_begin->renderArea,
+                               render_pass_begin->pClearValues,
+                               render_pass_begin->clearValueCount, contents);
+}
+
+void VkDriverDevice::cmd_end_render_pass(KxCommandBuffer command_buffer) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_end_render_pass();
+}
+
+void VkDriverDevice::cmd_next_subpass(KxCommandBuffer command_buffer,
+                                      KxSubpassContents contents) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_next_subpass(static_cast<VkSubpassContents>(contents));
+}
+
+// Dynamic Rendering (VK_KHR_dynamic_rendering)
+void VkDriverDevice::cmd_begin_rendering(KxCommandBuffer command_buffer,
+                                         const KxRenderingInfoKHR* rendering_info) {
+    if (!command_buffer || !rendering_info) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_begin_rendering(reinterpret_cast<const VkRenderingInfoKHR*>(rendering_info));
+}
+
+void VkDriverDevice::cmd_end_rendering(KxCommandBuffer command_buffer) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_end_rendering();
+}
+
+// Synchronization 2 (VK_KHR_synchronization2)
+void VkDriverDevice::cmd_pipeline_barrier2(KxCommandBuffer command_buffer,
+                                           const KxDependencyInfoKHR* dependency_info) {
+    if (!command_buffer || !dependency_info) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_pipeline_barrier2(reinterpret_cast<const VkDependencyInfoKHR*>(dependency_info));
+}
+
+void VkDriverDevice::cmd_write_timestamp2(KxCommandBuffer command_buffer,
+                                          KxPipelineStageFlags2KHR stage,
+                                          KxQueryPool query_pool,
+                                          uint32_t query) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_write_timestamp2(stage, reinterpret_cast<VkQueryPool>(query_pool), query);
+}
+
+void VkDriverDevice::cmd_set_event2(KxCommandBuffer command_buffer,
+                                    KxEvent event,
+                                    const KxDependencyInfoKHR* dependency_info) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_event2(reinterpret_cast<VkEvent>(event),
+                        reinterpret_cast<const VkDependencyInfoKHR*>(dependency_info));
+}
+
+void VkDriverDevice::cmd_reset_event2(KxCommandBuffer command_buffer,
+                                      KxEvent event,
+                                      KxPipelineStageFlags2KHR stage_mask) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_reset_event2(reinterpret_cast<VkEvent>(event), stage_mask);
+}
+
+void VkDriverDevice::cmd_wait_events2(KxCommandBuffer command_buffer,
+                                      uint32_t event_count,
+                                      const KxEvent* events,
+                                      const KxDependencyInfoKHR* dependency_infos) {
+    if (!command_buffer || !events || !dependency_infos) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_wait_events2(event_count,
+                          reinterpret_cast<const VkEvent*>(events),
+                          reinterpret_cast<const VkDependencyInfoKHR*>(dependency_infos));
+}
+
+// Copy Commands v2 (VK_KHR_copy_commands2)
+void VkDriverDevice::cmd_copy_buffer2(KxCommandBuffer command_buffer,
+                                      const void* copy_buffer_info) {
+    if (!command_buffer || !copy_buffer_info) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_copy_buffer2(reinterpret_cast<const VkCopyBufferInfo2KHR*>(copy_buffer_info));
+}
+
+void VkDriverDevice::cmd_copy_image2(KxCommandBuffer command_buffer,
+                                     const void* copy_image_info) {
+    if (!command_buffer || !copy_image_info) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_copy_image2(reinterpret_cast<const VkCopyImageInfo2KHR*>(copy_image_info));
+}
+
+void VkDriverDevice::cmd_blit_image2(KxCommandBuffer command_buffer,
+                                     const void* blit_image_info) {
+    if (!command_buffer || !blit_image_info) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_blit_image2(reinterpret_cast<const VkBlitImageInfo2KHR*>(blit_image_info));
+}
+
+void VkDriverDevice::cmd_copy_buffer_to_image2(KxCommandBuffer command_buffer,
+                                               const void* copy_buffer_to_image_info) {
+    if (!command_buffer || !copy_buffer_to_image_info) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_copy_buffer_to_image2(reinterpret_cast<const VkCopyBufferToImageInfo2KHR*>(copy_buffer_to_image_info));
+}
+
+void VkDriverDevice::cmd_copy_image_to_buffer2(KxCommandBuffer command_buffer,
+                                               const void* copy_image_to_buffer_info) {
+    if (!command_buffer || !copy_image_to_buffer_info) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_copy_image_to_buffer2(reinterpret_cast<const VkCopyImageToBufferInfo2KHR*>(copy_image_to_buffer_info));
+}
+
+void VkDriverDevice::cmd_resolve_image2(KxCommandBuffer command_buffer,
+                                        const void* resolve_image_info) {
+    if (!command_buffer || !resolve_image_info) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_resolve_image2(reinterpret_cast<const VkResolveImageInfo2KHR*>(resolve_image_info));
+}
+
+// Extended Dynamic State 3 (VK_EXT_extended_dynamic_state3)
+void VkDriverDevice::cmd_set_depth_clamp_enable(KxCommandBuffer command_buffer,
+                                                KxBool32 depth_clamp_enable) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_depth_clamp_enable(depth_clamp_enable);
+}
+
+void VkDriverDevice::cmd_set_polygon_mode(KxCommandBuffer command_buffer,
+                                          KxPolygonMode polygon_mode) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_polygon_mode(static_cast<VkPolygonMode>(polygon_mode));
+}
+
+void VkDriverDevice::cmd_set_rasterization_samples(KxCommandBuffer command_buffer,
+                                                   KxSampleCountFlagBits rasterization_samples) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_rasterization_samples(static_cast<VkSampleCountFlagBits>(rasterization_samples));
+}
+
+void VkDriverDevice::cmd_set_sample_mask(KxCommandBuffer command_buffer,
+                                         KxSampleMask sample_mask) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_sample_mask(static_cast<VkSampleMask>(sample_mask));
+}
+
+void VkDriverDevice::cmd_set_alpha_to_coverage_enable(KxCommandBuffer command_buffer,
+                                                      KxBool32 alpha_to_coverage_enable) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_alpha_to_coverage_enable(alpha_to_coverage_enable);
+}
+
+void VkDriverDevice::cmd_set_alpha_to_one_enable(KxCommandBuffer command_buffer,
+                                                 KxBool32 alpha_to_one_enable) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_alpha_to_one_enable(alpha_to_one_enable);
+}
+
+void VkDriverDevice::cmd_set_logic_op_enable(KxCommandBuffer command_buffer,
+                                             KxBool32 logic_op_enable) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_logic_op_enable(logic_op_enable);
+}
+
+void VkDriverDevice::cmd_set_color_blend_enable(KxCommandBuffer command_buffer,
+                                                uint32_t first_attachment,
+                                                uint32_t attachment_count,
+                                                const KxBool32* color_blend_enables) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_color_blend_enable(first_attachment, attachment_count, color_blend_enables);
+}
+
+void VkDriverDevice::cmd_set_color_blend_equation(KxCommandBuffer command_buffer,
+                                                  uint32_t first_attachment,
+                                                  uint32_t attachment_count,
+                                                  const void* color_blend_equations) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_color_blend_equation(first_attachment, attachment_count,
+                                      reinterpret_cast<const VkColorBlendEquationEXT*>(color_blend_equations));
+}
+
+void VkDriverDevice::cmd_set_color_write_mask(KxCommandBuffer command_buffer,
+                                              uint32_t first_attachment,
+                                              uint32_t attachment_count,
+                                              const KxColorComponentFlags* color_write_masks) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_color_write_mask(first_attachment, attachment_count, color_write_masks);
+}
+
+void VkDriverDevice::cmd_set_tessellation_domain_origin(KxCommandBuffer command_buffer,
+                                                        KxTessellationDomainOriginKHR domain_origin) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_tessellation_domain_origin(static_cast<VkTessellationDomainOrigin>(domain_origin));
+}
+
+void VkDriverDevice::cmd_set_rasterization_stream(KxCommandBuffer command_buffer,
+                                                  uint32_t rasterization_stream) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_rasterization_stream(rasterization_stream);
+}
+
+void VkDriverDevice::cmd_set_conservative_rasterization_mode(KxCommandBuffer command_buffer,
+                                                             KxConservativeRasterizationModeEXT conservative_rasterization_mode) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_conservative_rasterization_mode(static_cast<VkConservativeRasterizationModeEXT>(conservative_rasterization_mode));
+}
+
+void VkDriverDevice::cmd_set_extra_primitive_overestimation_size(KxCommandBuffer command_buffer,
+                                                                 float extra_primitive_overestimation_size) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_extra_primitive_overestimation_size(extra_primitive_overestimation_size);
+}
+
+void VkDriverDevice::cmd_set_depth_clip_enable(KxCommandBuffer command_buffer,
+                                               KxBool32 depth_clip_enable) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_depth_clip_enable(depth_clip_enable);
+}
+
+void VkDriverDevice::cmd_set_depth_clip_negative_one_to_one(KxCommandBuffer command_buffer,
+                                                            KxBool32 negative_one_to_one) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_depth_clip_negative_one_to_one(negative_one_to_one);
+}
+
+void VkDriverDevice::cmd_set_viewport_w_scaling_enable_nv(KxCommandBuffer command_buffer,
+                                                          KxBool32 viewport_w_scaling_enable) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_viewport_w_scaling_enable_nv(viewport_w_scaling_enable);
+}
+
+void VkDriverDevice::cmd_set_viewport_swizzle_nv(KxCommandBuffer command_buffer,
+                                                 uint32_t first_viewport,
+                                                 uint32_t viewport_count,
+                                                 const void* viewport_swizzles) {
+    if (!command_buffer) return;
+
+    auto* cmd = find_vk_command_buffer(command_buffer);
+    if (!cmd) return;
+
+    cmd->cmd_set_viewport_swizzle_nv(first_viewport, viewport_count,
+                                     reinterpret_cast<const VkViewportSwizzleNV*>(viewport_swizzles));
 }
 
 // ============================================================================
@@ -901,6 +1270,210 @@ void VkDriverDevice::destroy_sampler(KxSampler sampler,
 }
 
 // ============================================================================
+// Fence
+// ============================================================================
+
+KxResult VkDriverDevice::create_fence(const KxFenceCreateInfo* create_info,
+                                      const KxAllocationCallbacks* allocator,
+                                      KxFence* fence) {
+    (void)allocator;
+    if (!fence) return KX_ERROR_INVALID_ARGUMENT;
+    if (!create_info) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto& funcs = functions();
+    auto f = std::make_unique<VkFenceImpl>();
+    if (!f->initialize(funcs, static_cast<VkDevice>(vk_device_->getHandle()), create_info)) {
+        return KX_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
+    *fence = register_fence(std::move(f));
+    return KX_SUCCESS;
+}
+
+void VkDriverDevice::destroy_fence(KxFence fence,
+                                   const KxAllocationCallbacks* allocator) {
+    (void)allocator;
+    if (!fence) return;
+
+    auto* f = find_vk_fence(fence);
+    if (f) {
+        auto& funcs = functions();
+        if (f->handle() != VK_NULL_HANDLE) {
+            funcs.vkDestroyFence(static_cast<VkDevice>(vk_device_->getHandle()), f->handle(), nullptr);
+        }
+    }
+    unregister_fence(fence);
+}
+
+KxResult VkDriverDevice::wait_for_fences(uint32_t fence_count,
+                                         const KxFence* fences,
+                                         KxBool32 wait_all,
+                                         uint64_t timeout) {
+    if (fence_count == 0 || !fences) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto& funcs = functions();
+    std::vector<VkFence> vk_fences;
+    vk_fences.reserve(fence_count);
+    for (uint32_t i = 0; i < fence_count; ++i) {
+        auto* f = find_vk_fence(fences[i]);
+        if (f) {
+            vk_fences.push_back(f->handle());
+        }
+    }
+
+    if (vk_fences.empty()) return KX_ERROR_INVALID_ARGUMENT;
+
+    VkResult result = funcs.vkWaitForFences(static_cast<VkDevice>(vk_device_->getHandle()),
+                                             static_cast<uint32_t>(vk_fences.size()),
+                                             vk_fences.data(), wait_all, timeout);
+    return result == VK_SUCCESS ? KX_SUCCESS : KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+KxResult VkDriverDevice::reset_fences(uint32_t fence_count,
+                                      const KxFence* fences) {
+    if (fence_count == 0 || !fences) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto& funcs = functions();
+    std::vector<VkFence> vk_fences;
+    vk_fences.reserve(fence_count);
+    for (uint32_t i = 0; i < fence_count; ++i) {
+        auto* f = find_vk_fence(fences[i]);
+        if (f) {
+            vk_fences.push_back(f->handle());
+        }
+    }
+
+    if (vk_fences.empty()) return KX_ERROR_INVALID_ARGUMENT;
+
+    VkResult result = funcs.vkResetFences(static_cast<VkDevice>(vk_device_->getHandle()),
+                                           static_cast<uint32_t>(vk_fences.size()),
+                                           vk_fences.data());
+    return result == VK_SUCCESS ? KX_SUCCESS : KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+KxResult VkDriverDevice::get_fence_status(KxFence fence) {
+    if (!fence) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto* f = find_vk_fence(fence);
+    if (!f) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto& funcs = functions();
+    VkResult result = funcs.vkGetFenceStatus(static_cast<VkDevice>(vk_device_->getHandle()), f->handle());
+    return result == VK_SUCCESS ? KX_SUCCESS : KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+// ============================================================================
+// Semaphore
+// ============================================================================
+
+KxResult VkDriverDevice::create_semaphore(const KxSemaphoreCreateInfo* create_info,
+                                          const KxAllocationCallbacks* allocator,
+                                          KxSemaphore* semaphore) {
+    (void)allocator;
+    if (!semaphore) return KX_ERROR_INVALID_ARGUMENT;
+    if (!create_info) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto& funcs = functions();
+    auto s = std::make_unique<VkSemaphoreImpl>();
+    if (!s->initialize(funcs, static_cast<VkDevice>(vk_device_->getHandle()), create_info)) {
+        return KX_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
+    *semaphore = register_semaphore(std::move(s));
+    return KX_SUCCESS;
+}
+
+void VkDriverDevice::destroy_semaphore(KxSemaphore semaphore,
+                                       const KxAllocationCallbacks* allocator) {
+    (void)allocator;
+    if (!semaphore) return;
+
+    auto* s = find_vk_semaphore(semaphore);
+    if (s) {
+        auto& funcs = functions();
+        if (s->handle() != VK_NULL_HANDLE) {
+            funcs.vkDestroySemaphore(static_cast<VkDevice>(vk_device_->getHandle()), s->handle(), nullptr);
+        }
+    }
+    unregister_semaphore(semaphore);
+}
+
+// ============================================================================
+// Swapchain
+// ============================================================================
+
+KxResult VkDriverDevice::create_swapchain(const KxSwapchainCreateInfoKHR* create_info,
+                                          const KxAllocationCallbacks* allocator,
+                                          KxSwapchainKHR* swapchain) {
+    (void)allocator;
+    if (!swapchain) return KX_ERROR_INVALID_ARGUMENT;
+    if (!create_info) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto& funcs = functions();
+    auto sc = std::make_unique<VkSwapchainImpl>();
+
+    // Get physical device from the device, surface from create info
+    VkPhysicalDevice physical_device = static_cast<VkPhysicalDevice>(vk_device_->getPhysicalDeviceHandle());
+    VkSurfaceKHR surface = reinterpret_cast<VkSurfaceKHR>(create_info->surface);
+
+    if (!sc->initialize(funcs,
+                        static_cast<VkDevice>(vk_device_->getHandle()),
+                        physical_device,
+                        surface,
+                        create_info)) {
+        return KX_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
+    *swapchain = register_swapchain(std::move(sc));
+    return KX_SUCCESS;
+}
+
+void VkDriverDevice::destroy_swapchain(KxSwapchainKHR swapchain,
+                                       const KxAllocationCallbacks* allocator) {
+    (void)allocator;
+    if (!swapchain) return;
+
+    auto* sc = find_vk_swapchain(swapchain);
+    if (sc) {
+        auto& funcs = functions();
+        if (sc->handle() != VK_NULL_HANDLE) {
+            funcs.vkDestroySwapchainKHR(static_cast<VkDevice>(vk_device_->getHandle()), sc->handle(), nullptr);
+        }
+    }
+    unregister_swapchain(swapchain);
+}
+
+KxResult VkDriverDevice::acquire_next_image(KxSwapchainKHR swapchain,
+                                            uint64_t timeout,
+                                            KxSemaphore semaphore,
+                                            KxFence fence,
+                                            uint32_t* image_index) {
+    if (!swapchain || !image_index) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto* sc = find_vk_swapchain(swapchain);
+    if (!sc) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto& funcs = functions();
+    VkSemaphore vk_semaphore = semaphore ? reinterpret_cast<VkSemaphore>(semaphore) : VK_NULL_HANDLE;
+    VkFence vk_fence = fence ? reinterpret_cast<VkFence>(fence) : VK_NULL_HANDLE;
+
+    VkResult result = sc->acquire_next_image(funcs, timeout, vk_semaphore, vk_fence, image_index);
+    return result == VK_SUCCESS ? KX_SUCCESS : KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+KxResult VkDriverDevice::queue_present(KxQueue queue,
+                                       const KxPresentInfoKHR* present_info) {
+    if (!queue || !present_info) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto* q = find_vk_queue(queue);
+    if (!q) return KX_ERROR_INVALID_ARGUMENT;
+
+    auto& funcs = functions();
+    VkResult result = q->present(funcs, present_info);
+    return result == VK_SUCCESS ? KX_SUCCESS : KX_ERROR_FEATURE_NOT_PRESENT;
+}
+
+// ============================================================================
 // Object Registration
 // ============================================================================
 
@@ -1012,6 +1585,12 @@ KxQueue VkDriverDevice::register_queue(std::unique_ptr<VkQueueImpl> queue) {
     return reinterpret_cast<KxQueue>(handle);
 }
 
+KxSwapchainKHR VkDriverDevice::register_swapchain(std::unique_ptr<VkSwapchainImpl> swapchain) {
+    uint64_t handle = next_handle_++;
+    swapchains_[handle] = std::move(swapchain);
+    return reinterpret_cast<KxSwapchainKHR>(handle);
+}
+
 // ============================================================================
 // Object Finders
 // ============================================================================
@@ -1101,6 +1680,11 @@ VkSemaphoreImpl* VkDriverDevice::find_vk_semaphore(KxSemaphore semaphore) {
     return it != semaphores_.end() ? it->second.get() : nullptr;
 }
 
+VkSwapchainImpl* VkDriverDevice::find_vk_swapchain(KxSwapchainKHR swapchain) {
+    auto it = swapchains_.find(reinterpret_cast<uint64_t>(swapchain));
+    return it != swapchains_.end() ? it->second.get() : nullptr;
+}
+
 VkQueueImpl* VkDriverDevice::find_vk_queue(KxQueue queue) {
     auto it = queues_.find(reinterpret_cast<uint64_t>(queue));
     return it != queues_.end() ? it->second.get() : nullptr;
@@ -1176,6 +1760,10 @@ void VkDriverDevice::unregister_fence(KxFence fence) {
 
 void VkDriverDevice::unregister_semaphore(KxSemaphore semaphore) {
     semaphores_.erase(reinterpret_cast<uint64_t>(semaphore));
+}
+
+void VkDriverDevice::unregister_swapchain(KxSwapchainKHR swapchain) {
+    swapchains_.erase(reinterpret_cast<uint64_t>(swapchain));
 }
 
 void VkDriverDevice::unregister_queue(KxQueue queue) {

@@ -103,16 +103,172 @@ public:
         uint32_t count,
         const KxCommandBuffer* command_buffers) = 0;
 
+    virtual KxResult queue_submit(
+        uint32_t submit_count,
+        const KxSubmitInfo* submits,
+        KxFence fence) = 0;
+
+    // Command buffer recording
     virtual KxResult begin_command_buffer(
         KxCommandBuffer command_buffer,
         const KxCommandBufferBeginInfo* begin_info) = 0;
 
     virtual KxResult end_command_buffer(KxCommandBuffer command_buffer) = 0;
 
-    virtual KxResult queue_submit(
-        uint32_t submit_count,
-        const KxSubmitInfo* submits,
-        KxFence fence) = 0;
+    virtual KxResult reset_command_buffer(
+        KxCommandBuffer command_buffer,
+        KxCommandBufferResetFlags flags) = 0;
+
+    virtual void cmd_begin_render_pass(
+        KxCommandBuffer command_buffer,
+        const KxRenderPassBeginInfo* render_pass_begin,
+        KxSubpassContents contents) = 0;
+
+    virtual void cmd_end_render_pass(KxCommandBuffer command_buffer) = 0;
+
+    virtual void cmd_next_subpass(
+        KxCommandBuffer command_buffer,
+        KxSubpassContents contents) = 0;
+
+    // Dynamic Rendering (VK_KHR_dynamic_rendering)
+    virtual void cmd_begin_rendering(
+        KxCommandBuffer command_buffer,
+        const KxRenderingInfoKHR* rendering_info) = 0;
+
+    virtual void cmd_end_rendering(KxCommandBuffer command_buffer) = 0;
+
+    // Synchronization 2 (VK_KHR_synchronization2)
+    virtual void cmd_pipeline_barrier2(
+        KxCommandBuffer command_buffer,
+        const KxDependencyInfoKHR* dependency_info) = 0;
+
+    virtual void cmd_write_timestamp2(
+        KxCommandBuffer command_buffer,
+        KxPipelineStageFlags2KHR stage,
+        KxQueryPool query_pool,
+        uint32_t query) = 0;
+
+    virtual void cmd_set_event2(
+        KxCommandBuffer command_buffer,
+        KxEvent event,
+        const KxDependencyInfoKHR* dependency_info) = 0;
+
+    virtual void cmd_reset_event2(
+        KxCommandBuffer command_buffer,
+        KxEvent event,
+        KxPipelineStageFlags2KHR stage_mask) = 0;
+
+    virtual void cmd_wait_events2(
+        KxCommandBuffer command_buffer,
+        uint32_t event_count,
+        const KxEvent* events,
+        const KxDependencyInfoKHR* dependency_infos) = 0;
+
+    // Copy Commands v2 (VK_KHR_copy_commands2)
+    virtual void cmd_copy_buffer2(
+        KxCommandBuffer command_buffer,
+        const void* copy_buffer_info) = 0;
+
+    virtual void cmd_copy_image2(
+        KxCommandBuffer command_buffer,
+        const void* copy_image_info) = 0;
+
+    virtual void cmd_blit_image2(
+        KxCommandBuffer command_buffer,
+        const void* blit_image_info) = 0;
+
+    virtual void cmd_copy_buffer_to_image2(
+        KxCommandBuffer command_buffer,
+        const void* copy_buffer_to_image_info) = 0;
+
+    virtual void cmd_copy_image_to_buffer2(
+        KxCommandBuffer command_buffer,
+        const void* copy_image_to_buffer_info) = 0;
+
+    virtual void cmd_resolve_image2(
+        KxCommandBuffer command_buffer,
+        const void* resolve_image_info) = 0;
+
+    // Extended Dynamic State 3 (VK_EXT_extended_dynamic_state3)
+    virtual void cmd_set_depth_clamp_enable(
+        KxCommandBuffer command_buffer,
+        KxBool32 depth_clamp_enable) = 0;
+
+    virtual void cmd_set_polygon_mode(
+        KxCommandBuffer command_buffer,
+        KxPolygonMode polygon_mode) = 0;
+
+    virtual void cmd_set_rasterization_samples(
+        KxCommandBuffer command_buffer,
+        KxSampleCountFlagBits rasterization_samples) = 0;
+
+    virtual void cmd_set_sample_mask(
+        KxCommandBuffer command_buffer,
+        KxSampleMask sample_mask) = 0;
+
+    virtual void cmd_set_alpha_to_coverage_enable(
+        KxCommandBuffer command_buffer,
+        KxBool32 alpha_to_coverage_enable) = 0;
+
+    virtual void cmd_set_alpha_to_one_enable(
+        KxCommandBuffer command_buffer,
+        KxBool32 alpha_to_one_enable) = 0;
+
+    virtual void cmd_set_logic_op_enable(
+        KxCommandBuffer command_buffer,
+        KxBool32 logic_op_enable) = 0;
+
+    virtual void cmd_set_color_blend_enable(
+        KxCommandBuffer command_buffer,
+        uint32_t first_attachment,
+        uint32_t attachment_count,
+        const KxBool32* color_blend_enables) = 0;
+
+    virtual void cmd_set_color_blend_equation(
+        KxCommandBuffer command_buffer,
+        uint32_t first_attachment,
+        uint32_t attachment_count,
+        const void* color_blend_equations) = 0;
+
+    virtual void cmd_set_color_write_mask(
+        KxCommandBuffer command_buffer,
+        uint32_t first_attachment,
+        uint32_t attachment_count,
+        const KxColorComponentFlags* color_write_masks) = 0;
+
+    virtual void cmd_set_tessellation_domain_origin(
+        KxCommandBuffer command_buffer,
+        KxTessellationDomainOriginKHR domain_origin) = 0;
+
+    virtual void cmd_set_rasterization_stream(
+        KxCommandBuffer command_buffer,
+        uint32_t rasterization_stream) = 0;
+
+    virtual void cmd_set_conservative_rasterization_mode(
+        KxCommandBuffer command_buffer,
+        KxConservativeRasterizationModeEXT conservative_rasterization_mode) = 0;
+
+    virtual void cmd_set_extra_primitive_overestimation_size(
+        KxCommandBuffer command_buffer,
+        float extra_primitive_overestimation_size) = 0;
+
+    virtual void cmd_set_depth_clip_enable(
+        KxCommandBuffer command_buffer,
+        KxBool32 depth_clip_enable) = 0;
+
+    virtual void cmd_set_depth_clip_negative_one_to_one(
+        KxCommandBuffer command_buffer,
+        KxBool32 negative_one_to_one) = 0;
+
+    virtual void cmd_set_viewport_w_scaling_enable_nv(
+        KxCommandBuffer command_buffer,
+        KxBool32 viewport_w_scaling_enable) = 0;
+
+    virtual void cmd_set_viewport_swizzle_nv(
+        KxCommandBuffer command_buffer,
+        uint32_t first_viewport,
+        uint32_t viewport_count,
+        const void* viewport_swizzles) = 0;
 
     virtual KxResult queue_wait_idle() = 0;
     virtual KxResult device_wait_idle() = 0;
@@ -205,6 +361,51 @@ public:
     virtual void destroy_sampler(
         KxSampler sampler,
         const KxAllocationCallbacks* allocator) = 0;
+
+    /* Fence */
+    virtual KxResult create_fence(
+        const KxFenceCreateInfo* create_info,
+        const KxAllocationCallbacks* allocator,
+        KxFence* fence) = 0;
+    virtual void destroy_fence(
+        KxFence fence,
+        const KxAllocationCallbacks* allocator) = 0;
+    virtual KxResult wait_for_fences(
+        uint32_t fence_count,
+        const KxFence* fences,
+        KxBool32 wait_all,
+        uint64_t timeout) = 0;
+    virtual KxResult reset_fences(
+        uint32_t fence_count,
+        const KxFence* fences) = 0;
+    virtual KxResult get_fence_status(KxFence fence) = 0;
+
+    /* Semaphore */
+    virtual KxResult create_semaphore(
+        const KxSemaphoreCreateInfo* create_info,
+        const KxAllocationCallbacks* allocator,
+        KxSemaphore* semaphore) = 0;
+    virtual void destroy_semaphore(
+        KxSemaphore semaphore,
+        const KxAllocationCallbacks* allocator) = 0;
+
+    /* Swapchain */
+    virtual KxResult create_swapchain(
+        const KxSwapchainCreateInfoKHR* create_info,
+        const KxAllocationCallbacks* allocator,
+        KxSwapchainKHR* swapchain) = 0;
+    virtual void destroy_swapchain(
+        KxSwapchainKHR swapchain,
+        const KxAllocationCallbacks* allocator) = 0;
+    virtual KxResult acquire_next_image(
+        KxSwapchainKHR swapchain,
+        uint64_t timeout,
+        KxSemaphore semaphore,
+        KxFence fence,
+        uint32_t* image_index) = 0;
+    virtual KxResult queue_present(
+        KxQueue queue,
+        const KxPresentInfoKHR* present_info) = 0;
 
     virtual SoftwareBuffer* find_buffer(KxBuffer buffer) = 0;
     virtual SoftwareImage* find_image(KxImage image) = 0;
