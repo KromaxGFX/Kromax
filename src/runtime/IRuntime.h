@@ -22,20 +22,71 @@
 
 namespace kx {
 
-// Forward declarations for opaque types
-class Instance;
-class Device;
-class ShaderModule;
-class Pipeline;
-class DescriptorSetLayout;
-class DescriptorSet;
-class CommandPool;
-class CommandBuffer;
-class Swapchain;
-class Semaphore;
-class Fence;
-class Queue;
-class ThreadPool;
+// Abstract base classes for opaque types (backend implements these)
+class Instance {
+public:
+    virtual ~Instance() = default;
+};
+
+class Device {
+public:
+    virtual ~Device() = default;
+};
+
+class ShaderModule {
+public:
+    virtual ~ShaderModule() = default;
+};
+
+class Pipeline {
+public:
+    virtual ~Pipeline() = default;
+};
+
+class DescriptorSetLayout {
+public:
+    virtual ~DescriptorSetLayout() = default;
+};
+
+class DescriptorSet {
+public:
+    virtual ~DescriptorSet() = default;
+};
+
+class CommandPool {
+public:
+    virtual ~CommandPool() = default;
+};
+
+class CommandBuffer {
+public:
+    virtual ~CommandBuffer() = default;
+};
+
+class Swapchain {
+public:
+    virtual ~Swapchain() = default;
+};
+
+class Semaphore {
+public:
+    virtual ~Semaphore() = default;
+};
+
+class Fence {
+public:
+    virtual ~Fence() = default;
+};
+
+class Queue {
+public:
+    virtual ~Queue() = default;
+};
+
+class ThreadPool {
+public:
+    virtual ~ThreadPool() = default;
+};
 
 enum class BackendType : uint32_t {
     UNKNOWN = 0,
@@ -102,7 +153,7 @@ struct PipelineCreateInfo {
 };
 
 struct SwapchainCreateInfo {
-    KxStructureType sType = KX_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    KxStructureType sType = KX_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_EXT;
     const void* pNext = nullptr;
     uint32_t flags = 0;
     void* surface = nullptr;
@@ -130,7 +181,7 @@ struct SemaphoreCreateInfo {
 };
 
 struct ThreadPoolCreateInfo {
-    KxStructureType sType = KX_STRUCTURE_TYPE_THREAD_POOL_CREATE_INFO;
+    KxStructureType sType = KX_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     const void* pNext = nullptr;
     uint32_t threadCount = 0;
 };

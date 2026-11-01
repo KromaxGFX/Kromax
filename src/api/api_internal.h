@@ -10,6 +10,9 @@
 
 #include "kx_core.h"
 
+#include <vector>
+#include <memory>
+
 namespace kx {
 
 class Instance;

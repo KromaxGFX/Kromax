@@ -17,6 +17,20 @@ option(KX_DISABLE_EXCEPTIONS "Disable C++ exceptions in the internal implementat
 option(KX_DISABLE_RTTI "Disable RTTI in the internal implementation" OFF)
 option(KX_BUILD_ARM64 "Build ARM64/NEON optimizations (enabled on ARM64)" ON)
 option(KX_BUILD_SVE "Build SVE/SVE2 optimizations (requires ARM64 SVE support)" OFF)
+option(KX_BUILD_VULKAN_BACKEND "Build Vulkan backend (requires Vulkan SDK)" ON)
+
+# ARM64/NEON detection
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
+    set(KX_PLATFORM_ARM64 TRUE)
+    if(KX_BUILD_ARM64)
+        add_compile_options(-march=armv8-a+simd)
+        add_compile_definitions(KX_HAVE_NEON=1)
+    endif()
+    if(KX_BUILD_SVE)
+        add_compile_options(-march=armv8-a+sve)
+        add_compile_definitions(KX_HAVE_SVE=1)
+    endif()
+endif()
 
 # ARM64/NEON detection
 if(CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64|arm64")
@@ -108,7 +122,12 @@ add_library(kromax
     src/api/api_pipeline_commands.cpp
     src/api/api_pipeline_utils.cpp
     src/api/api_descriptor.cpp
-    src/api/api_shader.cpp
+    
+    src/api/shader/ShaderModule.h
+    src/api/shader/ShaderLanguage.h
+    src/api/shader/ShaderEnvironment.h
+    src/api/shader/Material.h
+    src/api/shader/TextureHelpers.h
 
     src/driver/IDriver.h
     src/driver/IDriverDevice.h
@@ -192,6 +211,19 @@ add_library(kromax
 
     src/runtime/IRuntime.h
     src/runtime/IDevice.h
+    src/runtime/IBufferFactory.h
+    src/runtime/IImageFactory.h
+    src/runtime/IMemoryManager.h
+    src/runtime/IShaderModuleFactory.h
+    src/runtime/IPipelineFactory.h
+    src/runtime/IDescriptorFactory.h
+    src/runtime/ICommandFactory.h
+    src/runtime/IRenderPassFactory.h
+    src/runtime/ISwapchainFactory.h
+    src/runtime/ISyncFactory.h
+    src/runtime/IQueueOperations.h
+    src/runtime/ISamplerFactory.h
+    src/runtime/IThreadPoolFactory.h
     src/runtime/ICommandBuffer.h
     src/runtime/IShaderModule.h
     src/runtime/IPipeline.h
@@ -286,10 +318,20 @@ target_sources(kromax PRIVATE
     src/shader/ShaderLexer.cpp
     src/shader/ShaderPreprocessor.cpp
     src/shader/ShaderParser.cpp
+    src/shader/ParserTypes.cpp
+    src/shader/ParserDeclarations.cpp
+    src/shader/ParserStatements.cpp
+    src/shader/ParserExpressions.cpp
     src/shader/ShaderCompiler.cpp
     src/shader/ShaderInterpreter.cpp
     src/shader/ShaderTypes.cpp
     src/shader/ShaderIR.cpp
+    
+    src/api/shader/ShaderModule.cpp
+    src/api/shader/ShaderLanguage.cpp
+    src/api/shader/ShaderEnvironment.cpp
+    src/api/shader/Material.cpp
+    src/api/shader/TextureHelpers.cpp
     src/driver/software/SoftwareRasterizerDraw.cpp
     src/driver/software/SoftwareRasterizerCompute.cpp
     src/driver/software/SoftwareMaterial.cpp
@@ -314,6 +356,21 @@ if(KX_BUILD_DRIVER_AMDGPU)
         src/driver/amdgpu/AmdGpuDriver.cpp
     )
     target_compile_definitions(kromax PRIVATE KX_DRIVER_AMDGPU_ENABLED)
+endif()
+
+# Vulkan backend - core modularization only (VkRuntime split)
+if(KX_BUILD_VULKAN_BACKEND)
+    find_package(Vulkan REQUIRED)
+    target_sources(kromax PRIVATE
+        src/vk_backend/VkRuntime.cpp
+        src/vk_backend/VkLoader.cpp
+        src/vk_backend/VkInstance.cpp
+        src/vk_backend/VkPhysicalDevice.cpp
+        src/vk_backend/VkDevice.cpp
+    )
+    target_include_directories(kromax PRIVATE src/vk_backend)
+    target_link_libraries(kromax PRIVATE ${VULKAN_LIBRARIES})
+    target_compile_definitions(kromax PRIVATE KX_HAVE_VULKAN=1)
 endif()
 
 # libdrm for KMS backend (optional)

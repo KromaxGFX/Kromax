@@ -8,6 +8,14 @@
  * consumes the preprocessed token stream and produces a ShaderProgram IR.
  * Dialect differences are handled by small virtual methods and configuration
  * flags rather than completely separate parsers.
+ *
+ * Modularized into linear inheritance chain:
+ * - ParserCore: token handling, error reporting, expression creation, operator utilities
+ * - ParserTypes: type parsing (base, vector, matrix, texture, sampler, struct)
+ * - ParserExpressions: primary, literal, identifier, postfix, unary, binary, ternary, call
+ * - ParserStatements: if, for, while, return, break, continue, switch, blocks
+ * - ParserDeclarations: program, structs, uniform buffers, functions, variables
+ * - ParserBuiltins: builtin function name list
  */
 
 #include <cstdint>
@@ -17,116 +25,104 @@
 #include "ShaderIR.h"
 #include "ShaderDiagnostics.h"
 #include "ShaderLexer.h"
+#include "ParserConfig.h"
+#include "ParserCore.h"
+#include "ParserTypes.h"
+#include "ParserExpressions.h"
+#include "ParserStatements.h"
+#include "ParserDeclarations.h"
 
 namespace kx {
 namespace shader {
 
-struct ParserConfig {
-    KxShaderLanguage language = KX_SHADER_LANGUAGE_GLSL;
-    bool allow_struct = true;
-    bool allow_uniform_buffer = true;
-    bool allow_push_constant = true;
-    bool require_version = false;
-    bool entry_point_required = false;
-};
-
 /* -----------------------------------------------------------------------
- * Parser
+ * Parser - main parser class using linear inheritance of modular components
  * --------------------------------------------------------------------- */
-class Parser {
+class Parser : public ParserDeclarations {
 public:
     explicit Parser(DiagnosticList& diagnostics, const ParserConfig& config = {})
-        : diagnostics_(diagnostics), config_(config) {}
+        : ParserDeclarations(diagnostics, config) {}
 
-    ShaderProgram parse(const std::vector<Token>& tokens, uint32_t source_file = 0);
+    using ParserDeclarations::parse;
 
-    const ParserConfig& config() const noexcept { return config_; }
+    const ParserConfig& config() const noexcept { return ParserCore::config(); }
+
+    /* Expose core parser state access */
+    using ParserCore::tokens;
+    using ParserCore::position;
+    using ParserCore::program;
+    using ParserCore::struct_names;
+    using ParserCore::current_function;
+    using ParserCore::diagnostics;
+
+    /* Expose token operations */
+    using ParserCore::peek;
+    using ParserCore::consume;
+    using ParserCore::match;
+    using ParserCore::check;
+    using ParserCore::expect;
+    using ParserCore::expect_identifier;
+    using ParserCore::token_type_name;
+
+    /* Expose expression creation */
+    using ParserCore::make_expr;
+    using ParserCore::make_bool;
+    using ParserCore::make_int;
+    using ParserCore::make_uint;
+    using ParserCore::make_float;
+    using ParserCore::make_vector;
+    using ParserCore::make_matrix;
+
+    /* Expose type promotion and operators */
+    using ParserCore::promote;
+    using ParserCore::get_precedence;
+    using ParserCore::is_assign_op;
+    using ParserCore::op_to_binary;
+    using ParserCore::op_to_unary;
+
+    /* Expose error reporting */
+    using ParserCore::add_diagnostic;
+    using ParserCore::error;
+    using ParserCore::warning;
+
+    /* Expose builtin check */
+    using ParserCore::is_builtin;
+
+    /* Expose types */
+    using ParserTypes::parse_type;
+    using ParserTypes::is_type_name;
+
+    /* Expose declarations */
+    using ParserDeclarations::parse_program;
+    using ParserDeclarations::parse_declaration;
+    using ParserDeclarations::parse_struct;
+    using ParserDeclarations::parse_uniform_buffer;
+    using ParserDeclarations::parse_block;
+    using ParserDeclarations::parse_variable_declaration;
+    using ParserDeclarations::parse_function;
+
+    /* Expose statements */
+    using ParserStatements::parse_statement;
+    using ParserStatements::parse_block_stmt;
+    using ParserStatements::parse_declare_stmt;
+    using ParserStatements::parse_assign_stmt;
+    using ParserStatements::parse_if_stmt;
+    using ParserStatements::parse_for_stmt;
+    using ParserStatements::parse_while_stmt;
+    using ParserStatements::parse_return_stmt;
+    using ParserStatements::parse_break_stmt;
+    using ParserStatements::parse_continue_stmt;
+    using ParserStatements::parse_discard_stmt;
+    using ParserStatements::parse_switch_stmt;
+
+    /* Expose expressions - public interface only */
+    using ParserExpressions::parse_expression;
 
 private:
-    /* Token access */
-    const Token& peek() const;
-    const Token& peek(int offset) const;
-    const Token& consume();
-    bool match(TokenType type, const std::string& text = "");
-    bool match(TokenType type, const std::string& text1, const std::string& text2);
-    bool check(TokenType type, const std::string& text = "") const;
-    void expect(TokenType type, const std::string& text = "");
-    void expect_identifier(std::string& out_name);
-
-    /* Top level */
-    void parse_program(const std::vector<Token>& tokens, uint32_t source_file);
-    void parse_declaration();
-    void parse_function();
-
-    /* Types */
-    ShaderType parse_type();
-    ShaderType parse_base_type();
-    ShaderType parse_vector_type();
-    ShaderType parse_matrix_type();
-    ShaderType parse_struct_type();
-    ShaderType parse_texture_type();
-    ShaderType parse_sampler_type();
-
-    /* Declarations */
-    void parse_variable_declaration();
-    void parse_uniform_buffer();
-    void parse_struct();
-    void parse_block(const std::string& keyword, StorageClass storage);
-
-    /* Statements */
-    void parse_statement(std::vector<Stmt>& stmts);
-    void parse_block_stmt(std::vector<Stmt>& stmts);
-    void parse_declare_stmt(std::vector<Stmt>& stmts);
-    void parse_assign_stmt(std::vector<Stmt>& stmts);
-    void parse_if_stmt(std::vector<Stmt>& stmts);
-    void parse_for_stmt(std::vector<Stmt>& stmts);
-    void parse_while_stmt(std::vector<Stmt>& stmts);
-    void parse_return_stmt(std::vector<Stmt>& stmts);
-    void parse_break_stmt(std::vector<Stmt>& stmts);
-    void parse_continue_stmt(std::vector<Stmt>& stmts);
-    void parse_discard_stmt(std::vector<Stmt>& stmts);
-    void parse_switch_stmt(std::vector<Stmt>& stmts);
-
-    /* Expressions */
-    uint32_t parse_expression(int precedence = 0);
-    uint32_t parse_primary();
-    uint32_t parse_identifier_expr();
-    uint32_t parse_literal_expr();
-    uint32_t parse_construct_expr();
-    uint32_t parse_unary_expr();
-    uint32_t parse_binary_expr(int min_precedence);
-    uint32_t parse_ternary_expr();
-    uint32_t parse_call_expr(uint32_t callee);
-    uint32_t parse_member_expr(uint32_t base);
-    uint32_t parse_index_expr(uint32_t base);
-    uint32_t parse_swizzle_expr(uint32_t base);
-    uint32_t parse_assign_expr(uint32_t lhs);
-    uint32_t parse_postfix_expr(uint32_t base);
-
-    /* Helpers */
-    int get_precedence(const std::string& op) const;
-    bool is_assign_op(const std::string& op) const;
-    BinaryOp op_to_binary(const std::string& op) const;
-    UnaryOp op_to_unary(const std::string& op) const;
-    void add_diagnostic(KxShaderSeverity severity, const std::string& message);
-    void error(const std::string& message);
-    void warning(const std::string& message);
-
-    /* Static helpers */
-    static const char* token_type_name(TokenType t);
-    bool is_type_name(const std::string& name) const;
-    uint32_t make_expr(ExprKind kind, const ShaderType& type, float fconst = 0.0f);
-
-    DiagnosticList& diagnostics_;
-    const ParserConfig& config_;
-    std::vector<Token> tokens_;
-    std::size_t position_ = 0;
-    ShaderProgram program_;
-    std::vector<std::string> struct_names_;
-    uint32_t current_function_ = UINT32_MAX;
+    /* All functionality inherited via linear inheritance chain */
 };
 
-} /* namespace shader */
-} /* namespace kx */
+} // namespace shader
+} // namespace kx
 
-#endif /* KROMAX_SRC_SHADER_SHADERPARSER_H */
+#endif // KROMAX_SRC_SHADER_SHADERPARSER_H

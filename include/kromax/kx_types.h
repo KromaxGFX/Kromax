@@ -206,6 +206,15 @@ typedef struct KxAllocationCallbacks {
 } KxAllocationCallbacks;
 
 /* =======================================================================
+ * Extension properties
+ * ======================================================================= */
+
+typedef struct KxExtensionProperties {
+    const char* extensionName;
+    uint32_t specVersion;
+} KxExtensionProperties;
+
+/* =======================================================================
  * Application info
  * ======================================================================= */
 

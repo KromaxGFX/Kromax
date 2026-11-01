@@ -6,6 +6,7 @@
 
 #include "api.h"
 #include "api_internal.h"
+#include "TextureSampler.h"
 
 #include "Device.h"
 #include <cmath>

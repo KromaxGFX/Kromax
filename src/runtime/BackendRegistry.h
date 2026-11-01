@@ -15,6 +15,7 @@
 #include <vector>
 #include <unordered_map>
 #include <algorithm>
+#include <type_traits>
 
 #include "IRuntime.h"
 #include "IBackend.h"
@@ -43,6 +44,14 @@ public:
     };
 
     void registerBackend(BackendType type, const char* libraryName, BackendFactoryFn factory) noexcept;
+
+    template <BackendType T, typename TBackend>
+    void registerBackend() noexcept {
+        static_assert(std::is_base_of_v<IRuntime, TBackend>, "TBackend must derive from IRuntime");
+        registerBackend(T, nullptr, []() -> std::unique_ptr<IRuntime> {
+            return std::make_unique<TBackend>();
+        });
+    }
 
     Expected<std::unique_ptr<IRuntime>> loadBackend(const char* name);
     Expected<std::unique_ptr<IRuntime>> loadPreferredBackend();
