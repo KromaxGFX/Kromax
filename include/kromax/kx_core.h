@@ -26,6 +26,7 @@
 #include "kx_material.h"
 #include "kx_texture.h"
 #include "kx_swapchain.h"
+#include "kx_thread_pool.h"
 #include "kx_api.h"
 
 #endif /* KX_CORE_H */

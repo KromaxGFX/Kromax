@@ -37,6 +37,7 @@ class Semaphore;
 class Fence;
 class Queue;
 class Sampler;
+class ThreadPool;
 
 struct BufferCreateInfo {
     KxStructureType sType = KX_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -181,6 +182,13 @@ struct SamplerCreateInfo {
     KxBool32 unnormalizedCoordinates = false;
 };
 
+struct ThreadPoolCreateInfo {
+    KxStructureType sType = KX_STRUCTURE_TYPE_THREAD_POOL_CREATE_INFO;
+    const void* pNext = nullptr;
+    KxThreadPoolCreateFlags flags = 0;
+    uint32_t threadCount = 0;
+};
+
 class IDevice {
 public:
     virtual ~IDevice() = default;
@@ -262,6 +270,10 @@ public:
     // Sampler
     virtual Result createSampler(const SamplerCreateInfo& info, Sampler** outSampler) = 0;
     virtual void destroySampler(Sampler* sampler) = 0;
+
+    // Thread pool
+    virtual Result createThreadPool(const ThreadPoolCreateInfo& info, ThreadPool** outThreadPool) = 0;
+    virtual void destroyThreadPool(ThreadPool* threadPool) = 0;
 
     // Device properties
     virtual Result waitIdle() = 0;

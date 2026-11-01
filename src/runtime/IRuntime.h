@@ -35,6 +35,7 @@ class Swapchain;
 class Semaphore;
 class Fence;
 class Queue;
+class ThreadPool;
 
 enum class BackendType : uint32_t {
     UNKNOWN = 0,
@@ -128,6 +129,12 @@ struct SemaphoreCreateInfo {
     uint64_t initialValue = 0;
 };
 
+struct ThreadPoolCreateInfo {
+    KxStructureType sType = KX_STRUCTURE_TYPE_THREAD_POOL_CREATE_INFO;
+    const void* pNext = nullptr;
+    uint32_t threadCount = 0;
+};
+
 struct PhysicalDeviceInfo {
     uint64_t handle = 0;
     KxPhysicalDeviceProperties properties{};
@@ -171,6 +178,10 @@ public:
 
     virtual KxResult compileShader(const ShaderSourceCreateInfo& info, ShaderModule** outModule) = 0;
     virtual KxResult compileShaderToSPIRV(const ShaderSourceCreateInfo& info, std::vector<uint32_t>* outSpirv) = 0;
+
+    // Thread pool
+    virtual KxResult createThreadPool(const ThreadPoolCreateInfo& info, ThreadPool** outThreadPool) = 0;
+    virtual void destroyThreadPool(ThreadPool* threadPool) = 0;
 
     virtual bool isExtensionSupported(const char* extensionName) const noexcept = 0;
     virtual KxResult getExtensionProperties(uint32_t* pPropertyCount, void* pProperties) = 0;
