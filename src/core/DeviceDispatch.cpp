@@ -191,4 +191,91 @@ void Device::dispatch_unmap_memory(KxDevice device, KxDeviceMemory memory) {
     if (dev) dev->driver_device()->unmap_memory(memory);
 }
 
+KxResult Device::dispatch_create_fence(KxDevice device,
+                                       const KxFenceCreateInfo* info,
+                                       const KxAllocationCallbacks* alloc,
+                                       KxFence* fence) {
+    auto* dev = find_device_locked(device);
+    return dev ? dev->driver_device()->create_fence(info, alloc, fence)
+               : KX_ERROR_DEVICE_LOST;
+}
+
+void Device::dispatch_destroy_fence(KxDevice device, KxFence fence,
+                                    const KxAllocationCallbacks* alloc) {
+    auto* dev = find_device_locked(device);
+    if (dev) dev->driver_device()->destroy_fence(fence, alloc);
+}
+
+KxResult Device::dispatch_wait_for_fences(KxDevice device,
+                                          uint32_t fence_count,
+                                          const KxFence* fences,
+                                          KxBool32 wait_all,
+                                          uint64_t timeout) {
+    auto* dev = find_device_locked(device);
+    return dev ? dev->driver_device()->wait_for_fences(fence_count, fences, wait_all, timeout)
+               : KX_ERROR_DEVICE_LOST;
+}
+
+KxResult Device::dispatch_reset_fences(KxDevice device,
+                                       uint32_t fence_count,
+                                       const KxFence* fences) {
+    auto* dev = find_device_locked(device);
+    return dev ? dev->driver_device()->reset_fences(fence_count, fences)
+               : KX_ERROR_DEVICE_LOST;
+}
+
+KxResult Device::dispatch_get_fence_status(KxDevice device, KxFence fence) {
+    auto* dev = find_device_locked(device);
+    return dev ? dev->driver_device()->get_fence_status(fence)
+               : KX_ERROR_DEVICE_LOST;
+}
+
+KxResult Device::dispatch_create_semaphore(KxDevice device,
+                                           const KxSemaphoreCreateInfo* info,
+                                           const KxAllocationCallbacks* alloc,
+                                           KxSemaphore* semaphore) {
+    auto* dev = find_device_locked(device);
+    return dev ? dev->driver_device()->create_semaphore(info, alloc, semaphore)
+               : KX_ERROR_DEVICE_LOST;
+}
+
+void Device::dispatch_destroy_semaphore(KxDevice device, KxSemaphore semaphore,
+                                        const KxAllocationCallbacks* alloc) {
+    auto* dev = find_device_locked(device);
+    if (dev) dev->driver_device()->destroy_semaphore(semaphore, alloc);
+}
+
+KxResult Device::dispatch_create_swapchain(KxDevice device,
+                                           const KxSwapchainCreateInfoKHR* info,
+                                           const KxAllocationCallbacks* alloc,
+                                           KxSwapchainKHR* swapchain) {
+    auto* dev = find_device_locked(device);
+    return dev ? dev->driver_device()->create_swapchain(info, alloc, swapchain)
+               : KX_ERROR_DEVICE_LOST;
+}
+
+void Device::dispatch_destroy_swapchain(KxDevice device, KxSwapchainKHR swapchain,
+                                        const KxAllocationCallbacks* alloc) {
+    auto* dev = find_device_locked(device);
+    if (dev) dev->driver_device()->destroy_swapchain(swapchain, alloc);
+}
+
+KxResult Device::dispatch_acquire_next_image(KxDevice device,
+                                             KxSwapchainKHR swapchain,
+                                             uint64_t timeout,
+                                             KxSemaphore semaphore,
+                                             KxFence fence,
+                                             uint32_t* image_index) {
+    auto* dev = find_device_locked(device);
+    return dev ? dev->driver_device()->acquire_next_image(swapchain, timeout, semaphore, fence, image_index)
+               : KX_ERROR_DEVICE_LOST;
+}
+
+KxResult Device::dispatch_queue_present(KxQueue queue,
+                                        const KxPresentInfoKHR* present_info) {
+    auto* dev = find_device_locked_by_queue(queue);
+    return dev ? dev->driver_device()->queue_present(queue, present_info)
+               : KX_ERROR_DEVICE_LOST;
+}
+
 } /* namespace kx */

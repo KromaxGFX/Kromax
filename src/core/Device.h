@@ -146,6 +146,63 @@ public:
     static void dispatch_destroy_sampler(KxDevice device, KxSampler sampler,
                                          const KxAllocationCallbacks* alloc);
 
+    // Fence
+    static KxResult dispatch_create_fence(KxDevice device,
+                                          const KxFenceCreateInfo* info,
+                                          const KxAllocationCallbacks* alloc,
+                                          KxFence* fence);
+    static void dispatch_destroy_fence(KxDevice device, KxFence fence,
+                                       const KxAllocationCallbacks* alloc);
+    static KxResult dispatch_wait_for_fences(KxDevice device,
+                                             uint32_t fence_count,
+                                             const KxFence* fences,
+                                             KxBool32 wait_all,
+                                             uint64_t timeout);
+    static KxResult dispatch_reset_fences(KxDevice device,
+                                          uint32_t fence_count,
+                                          const KxFence* fences);
+    static KxResult dispatch_get_fence_status(KxDevice device, KxFence fence);
+
+    // Semaphore
+    static KxResult dispatch_create_semaphore(KxDevice device,
+                                              const KxSemaphoreCreateInfo* info,
+                                              const KxAllocationCallbacks* alloc,
+                                              KxSemaphore* semaphore);
+    static void dispatch_destroy_semaphore(KxDevice device, KxSemaphore semaphore,
+                                           const KxAllocationCallbacks* alloc);
+
+    // Swapchain
+    static KxResult dispatch_create_swapchain(KxDevice device,
+                                              const KxSwapchainCreateInfoKHR* info,
+                                              const KxAllocationCallbacks* alloc,
+                                              KxSwapchainKHR* swapchain);
+    static void dispatch_destroy_swapchain(KxDevice device, KxSwapchainKHR swapchain,
+                                           const KxAllocationCallbacks* alloc);
+    static KxResult dispatch_acquire_next_image(KxDevice device,
+                                                KxSwapchainKHR swapchain,
+                                                uint64_t timeout,
+                                                KxSemaphore semaphore,
+                                                KxFence fence,
+                                                uint32_t* image_index);
+    static KxResult dispatch_queue_present(KxQueue queue,
+                                           const KxPresentInfoKHR* present_info);
+
+    // Surface
+    static KxResult dispatch_create_win32_surface(KxInstance instance,
+                                                  const KxWin32SurfaceCreateInfoKHR* info,
+                                                  const KxAllocationCallbacks* alloc,
+                                                  KxSurfaceKHR* surface);
+    static KxResult dispatch_create_xcb_surface(KxInstance instance,
+                                                const KxXcbSurfaceCreateInfoKHR* info,
+                                                const KxAllocationCallbacks* alloc,
+                                                KxSurfaceKHR* surface);
+    static KxResult dispatch_create_wayland_surface(KxInstance instance,
+                                                    const KxWaylandSurfaceCreateInfoKHR* info,
+                                                    const KxAllocationCallbacks* alloc,
+                                                    KxSurfaceKHR* surface);
+    static void dispatch_destroy_surface(KxInstance instance, KxSurfaceKHR surface,
+                                         const KxAllocationCallbacks* alloc);
+
     // Shader module
     static KxResult dispatch_create_shader_module(KxDevice device,
                                                   const KxShaderModuleCreateInfo* info,

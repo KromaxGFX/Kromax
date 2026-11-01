@@ -46,6 +46,25 @@ public:
     virtual Expected<std::unique_ptr<IDriverDevice>>
     create_device(PhysicalDevice* physical_device,
                   const KxDeviceCreateInfo* create_info) = 0;
+
+    /*
+     * Surface creation (instance-level operations)
+     */
+    virtual KxResult create_win32_surface(Instance* instance,
+                                          const KxWin32SurfaceCreateInfoKHR* create_info,
+                                          const KxAllocationCallbacks* allocator,
+                                          KxSurfaceKHR* surface) = 0;
+    virtual KxResult create_xcb_surface(Instance* instance,
+                                        const KxXcbSurfaceCreateInfoKHR* create_info,
+                                        const KxAllocationCallbacks* allocator,
+                                        KxSurfaceKHR* surface) = 0;
+    virtual KxResult create_wayland_surface(Instance* instance,
+                                            const KxWaylandSurfaceCreateInfoKHR* create_info,
+                                            const KxAllocationCallbacks* allocator,
+                                            KxSurfaceKHR* surface) = 0;
+    virtual void destroy_surface(Instance* instance,
+                                 KxSurfaceKHR surface,
+                                 const KxAllocationCallbacks* allocator) = 0;
 };
 
 } /* namespace kx */

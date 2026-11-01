@@ -358,7 +358,7 @@ if(KX_BUILD_DRIVER_AMDGPU)
     target_compile_definitions(kromax PRIVATE KX_DRIVER_AMDGPU_ENABLED)
 endif()
 
-# Vulkan backend - core modularization only (VkRuntime split)
+# Vulkan backend - full implementation
 if(KX_BUILD_VULKAN_BACKEND)
     find_package(Vulkan REQUIRED)
     target_sources(kromax PRIVATE
@@ -367,6 +367,14 @@ if(KX_BUILD_VULKAN_BACKEND)
         src/vk_backend/VkInstance.cpp
         src/vk_backend/VkPhysicalDevice.cpp
         src/vk_backend/VkDevice.cpp
+        src/vk_backend/VkDriverDevice.cpp
+        src/vk_backend/VkShaderModule.cpp
+        src/vk_backend/VkPipeline.cpp
+        src/vk_backend/VkDescriptor.cpp
+        src/vk_backend/VkCommand.cpp
+        src/vk_backend/VkBuffer.cpp
+        src/vk_backend/VkRenderPass.cpp
+        src/vk_backend/VkSwapchain.cpp
     )
     target_include_directories(kromax PRIVATE src/vk_backend)
     target_link_libraries(kromax PRIVATE ${VULKAN_LIBRARIES})

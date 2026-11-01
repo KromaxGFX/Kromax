@@ -130,10 +130,12 @@ VkDescriptorSetImpl::~VkDescriptorSetImpl() {
 VkDescriptorSetImpl::VkDescriptorSetImpl(VkDescriptorSetImpl&& other) noexcept
     : set_(other.set_)
     , layout_(other.layout_)
-    , pool_(other.pool_) {
+    , pool_(other.pool_)
+    , device_(other.device_) {
     other.set_ = VK_NULL_HANDLE;
     other.layout_ = VK_NULL_HANDLE;
     other.pool_ = VK_NULL_HANDLE;
+    other.device_ = VK_NULL_HANDLE;
 }
 
 VkDescriptorSetImpl& VkDescriptorSetImpl::operator=(VkDescriptorSetImpl&& other) noexcept {
@@ -141,9 +143,11 @@ VkDescriptorSetImpl& VkDescriptorSetImpl::operator=(VkDescriptorSetImpl&& other)
         set_ = other.set_;
         layout_ = other.layout_;
         pool_ = other.pool_;
+        device_ = other.device_;
         other.set_ = VK_NULL_HANDLE;
         other.layout_ = VK_NULL_HANDLE;
         other.pool_ = VK_NULL_HANDLE;
+        other.device_ = VK_NULL_HANDLE;
     }
     return *this;
 }
@@ -177,8 +181,8 @@ void VkDescriptorSetImpl::update(VkFunctionTable& functions,
             for (uint32_t j = 0; j < kx_write.descriptorCount; ++j) {
                 const KxDescriptorImageInfo& kx_img = kx_write.pImageInfo[j];
                 VkDescriptorImageInfo vk_img{};
-                vk_img.sampler = static_cast<VkSampler>(kx_img.sampler);
-                vk_img.imageView = static_cast<VkImageView>(kx_img.imageView);
+                vk_img.sampler = reinterpret_cast<VkSampler>(kx_img.sampler);
+                vk_img.imageView = reinterpret_cast<VkImageView>(kx_img.imageView);
                 vk_img.imageLayout = static_cast<VkImageLayout>(kx_img.imageLayout);
                 image_infos.push_back(vk_img);
             }
@@ -190,7 +194,7 @@ void VkDescriptorSetImpl::update(VkFunctionTable& functions,
             for (uint32_t j = 0; j < kx_write.descriptorCount; ++j) {
                 const KxDescriptorBufferInfo& kx_buf = kx_write.pBufferInfo[j];
                 VkDescriptorBufferInfo vk_buf{};
-                vk_buf.buffer = static_cast<VkBuffer>(kx_buf.buffer);
+                vk_buf.buffer = reinterpret_cast<VkBuffer>(kx_buf.buffer);
                 vk_buf.offset = kx_buf.offset;
                 vk_buf.range = kx_buf.range;
                 buffer_infos.push_back(vk_buf);
@@ -200,8 +204,9 @@ void VkDescriptorSetImpl::update(VkFunctionTable& functions,
 
         if (kx_write.pTexelBufferView) {
             texel_buffer_views.reserve(texel_buffer_views.size() + kx_write.descriptorCount);
+            const VkBufferView* texel_views = reinterpret_cast<const VkBufferView*>(kx_write.pTexelBufferView);
             for (uint32_t j = 0; j < kx_write.descriptorCount; ++j) {
-                texel_buffer_views.push_back(static_cast<VkBufferView>(kx_write.pTexelBufferView[j]));
+                texel_buffer_views.push_back(texel_views[j]);
             }
             vk_write.pTexelBufferView = &texel_buffer_views[texel_buffer_views.size() - kx_write.descriptorCount];
         }
@@ -210,7 +215,7 @@ void VkDescriptorSetImpl::update(VkFunctionTable& functions,
     }
 
     if (!vk_writes.empty()) {
-        functions.vkUpdateDescriptorSets(functions.vkGetDeviceQueue ? VK_NULL_HANDLE : VK_NULL_HANDLE,
+        functions.vkUpdateDescriptorSets(device_,
                                          static_cast<uint32_t>(vk_writes.size()),
                                          vk_writes.data(),
                                          0, nullptr);
@@ -224,7 +229,7 @@ void VkDescriptorSetImpl::update(VkFunctionTable& functions,
             const KxCopyDescriptorSet& kx_copy = copies[i];
             VkCopyDescriptorSet vk_copy{};
             vk_copy.sType = VK_STRUCTURE_TYPE_COPY_DESCRIPTOR_SET;
-            vk_copy.srcSet = static_cast<VkDescriptorSet>(kx_copy.srcSet);
+            vk_copy.srcSet = reinterpret_cast<VkDescriptorSet>(kx_copy.srcSet);
             vk_copy.srcBinding = kx_copy.srcBinding;
             vk_copy.srcArrayElement = kx_copy.srcArrayElement;
             vk_copy.dstSet = set_; // Destination is this set

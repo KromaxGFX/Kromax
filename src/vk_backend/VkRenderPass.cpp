@@ -95,7 +95,8 @@ bool VkRenderPassImpl::initialize(VkFunctionTable& functions,
 
     VkRenderPassCreateInfo vk_info{};
     vk_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    vk_info.flags = static_cast<VkRenderPassCreateFlags>(create_info->flags);
+    // KxRenderPassCreateInfo doesn't have flags field
+    vk_info.flags = 0;
     vk_info.attachmentCount = static_cast<uint32_t>(attachments_.size());
     vk_info.pAttachments = attachments_.data();
     vk_info.subpassCount = static_cast<uint32_t>(subpasses_.size());
@@ -163,7 +164,7 @@ bool VkFramebufferImpl::initialize(VkFunctionTable& functions,
                                    VkDevice device,
                                    const KxFramebufferCreateInfo* create_info) {
     device_ = device;
-    render_pass_ = static_cast<VkRenderPass>(create_info->renderPass);
+    render_pass_ = reinterpret_cast<VkRenderPass>(create_info->renderPass);
     width_ = create_info->width;
     height_ = create_info->height;
     layers_ = create_info->layers;
@@ -171,7 +172,7 @@ bool VkFramebufferImpl::initialize(VkFunctionTable& functions,
     // Convert attachments
     attachments_.reserve(create_info->attachmentCount);
     for (uint32_t i = 0; i < create_info->attachmentCount; ++i) {
-        attachments_.push_back(static_cast<VkImageView>(create_info->pAttachments[i]));
+        attachments_.push_back(reinterpret_cast<VkImageView>(create_info->pAttachments[i]));
     }
 
     VkFramebufferCreateInfo vk_info{};

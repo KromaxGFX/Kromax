@@ -65,7 +65,8 @@ bool VkBufferImpl::initialize(VkFunctionTable& functions,
     vk_info.flags = static_cast<VkBufferCreateFlags>(create_info->flags);
     vk_info.size = create_info->size;
     vk_info.usage = static_cast<VkBufferUsageFlags>(create_info->usage);
-    vk_info.sharingMode = static_cast<VkSharingMode>(create_info->sharingMode);
+    // KxBufferCreateInfo uses sharingModeExclusive (bool) instead of sharingMode (enum)
+    vk_info.sharingMode = create_info->sharingModeExclusive ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
     vk_info.queueFamilyIndexCount = create_info->queueFamilyIndexCount;
     vk_info.pQueueFamilyIndices = create_info->pQueueFamilyIndices;
 
@@ -137,7 +138,7 @@ bool VkImageImpl::initialize(VkFunctionTable& functions,
                              const KxImageCreateInfo* create_info) {
     device_ = device;
     format_ = static_cast<VkFormat>(create_info->format);
-    extent_ = create_info->extent;
+    extent_ = {create_info->width, create_info->height, create_info->depth};
     mip_levels_ = create_info->mipLevels;
     array_layers_ = create_info->arrayLayers;
     tiling_ = static_cast<VkImageTiling>(create_info->tiling);
@@ -154,7 +155,8 @@ bool VkImageImpl::initialize(VkFunctionTable& functions,
     vk_info.samples = static_cast<VkSampleCountFlagBits>(create_info->samples);
     vk_info.tiling = tiling_;
     vk_info.usage = static_cast<VkImageUsageFlags>(create_info->usage);
-    vk_info.sharingMode = static_cast<VkSharingMode>(create_info->sharingMode);
+    // KxImageCreateInfo uses sharingModeExclusive (bool) instead of sharingMode (enum)
+    vk_info.sharingMode = create_info->sharingModeExclusive ? VK_SHARING_MODE_EXCLUSIVE : VK_SHARING_MODE_CONCURRENT;
     vk_info.queueFamilyIndexCount = create_info->queueFamilyIndexCount;
     vk_info.pQueueFamilyIndices = create_info->pQueueFamilyIndices;
     vk_info.initialLayout = layout_;
@@ -206,7 +208,7 @@ bool VkImageViewImpl::initialize(VkFunctionTable& functions,
                                  VkDevice device,
                                  const KxImageViewCreateInfo* create_info) {
     device_ = device;
-    image_ = static_cast<VkImage>(create_info->image);
+    image_ = reinterpret_cast<VkImage>(create_info->image);
     format_ = static_cast<VkFormat>(create_info->format);
     view_type_ = static_cast<VkImageViewType>(create_info->viewType);
 
@@ -315,7 +317,9 @@ bool VkSamplerImpl::initialize(VkFunctionTable& functions,
     vk_info.flags = static_cast<VkSamplerCreateFlags>(create_info->flags);
     vk_info.magFilter = static_cast<VkFilter>(create_info->magFilter);
     vk_info.minFilter = static_cast<VkFilter>(create_info->minFilter);
-    vk_info.mipmapMode = static_cast<VkSamplerMipmapMode>(create_info->mipmapMode);
+    // KxSamplerCreateInfo doesn't have mipmapMode - derive from minFilter
+    // If minFilter is LINEAR, use LINEAR mipmap mode, else NEAREST
+    vk_info.mipmapMode = (create_info->minFilter == KX_FILTER_LINEAR) ? VK_SAMPLER_MIPMAP_MODE_LINEAR : VK_SAMPLER_MIPMAP_MODE_NEAREST;
     vk_info.addressModeU = static_cast<VkSamplerAddressMode>(create_info->addressModeU);
     vk_info.addressModeV = static_cast<VkSamplerAddressMode>(create_info->addressModeV);
     vk_info.addressModeW = static_cast<VkSamplerAddressMode>(create_info->addressModeW);

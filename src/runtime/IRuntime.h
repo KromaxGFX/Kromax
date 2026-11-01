@@ -230,6 +230,23 @@ public:
     virtual KxResult compileShader(const ShaderSourceCreateInfo& info, ShaderModule** outModule) = 0;
     virtual KxResult compileShaderToSPIRV(const ShaderSourceCreateInfo& info, std::vector<uint32_t>* outSpirv) = 0;
 
+    // Surface creation (platform-specific)
+    virtual KxResult createWin32Surface(Instance* instance,
+                                        const KxWin32SurfaceCreateInfoKHR* create_info,
+                                        const KxAllocationCallbacks* allocator,
+                                        KxSurfaceKHR* surface) = 0;
+    virtual KxResult createXcbSurface(Instance* instance,
+                                      const KxXcbSurfaceCreateInfoKHR* create_info,
+                                      const KxAllocationCallbacks* allocator,
+                                      KxSurfaceKHR* surface) = 0;
+    virtual KxResult createWaylandSurface(Instance* instance,
+                                          const KxWaylandSurfaceCreateInfoKHR* create_info,
+                                          const KxAllocationCallbacks* allocator,
+                                          KxSurfaceKHR* surface) = 0;
+    virtual void destroySurface(Instance* instance,
+                                KxSurfaceKHR surface,
+                                const KxAllocationCallbacks* allocator) = 0;
+
     // Thread pool
     virtual KxResult createThreadPool(const ThreadPoolCreateInfo& info, ThreadPool** outThreadPool) = 0;
     virtual void destroyThreadPool(ThreadPool* threadPool) = 0;

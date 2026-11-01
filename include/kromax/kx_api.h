@@ -584,6 +584,147 @@ KX_API void KX_CALL kxCmdNextSubpass(
     KxCommandBuffer commandBuffer,
     KxSubpassContents contents);
 
+/* Dynamic Rendering (VK_KHR_dynamic_rendering) */
+KX_API void KX_CALL kxCmdBeginRendering(
+    KxCommandBuffer commandBuffer,
+    const KxRenderingInfoKHR* pRenderingInfo);
+
+KX_API void KX_CALL kxCmdEndRendering(
+    KxCommandBuffer commandBuffer);
+
+/* Synchronization 2 (VK_KHR_synchronization2) */
+KX_API void KX_CALL kxCmdPipelineBarrier2(
+    KxCommandBuffer commandBuffer,
+    const KxDependencyInfoKHR* pDependencyInfo);
+
+KX_API void KX_CALL kxCmdWriteTimestamp2(
+    KxCommandBuffer commandBuffer,
+    KxPipelineStageFlags2KHR stage,
+    KxQueryPool queryPool,
+    uint32_t query);
+
+KX_API void KX_CALL kxCmdSetEvent2(
+    KxCommandBuffer commandBuffer,
+    KxEvent event,
+    const KxDependencyInfoKHR* pDependencyInfo);
+
+KX_API void KX_CALL kxCmdResetEvent2(
+    KxCommandBuffer commandBuffer,
+    KxEvent event,
+    KxPipelineStageFlags2KHR stageMask);
+
+KX_API void KX_CALL kxCmdWaitEvents2(
+    KxCommandBuffer commandBuffer,
+    uint32_t eventCount,
+    const KxEvent* pEvents,
+    const KxDependencyInfoKHR* pDependencyInfos);
+
+/* Copy Commands v2 (VK_KHR_copy_commands2) */
+KX_API void KX_CALL kxCmdCopyBuffer2(
+    KxCommandBuffer commandBuffer,
+    const void* pCopyBufferInfo);
+
+KX_API void KX_CALL kxCmdCopyImage2(
+    KxCommandBuffer commandBuffer,
+    const void* pCopyImageInfo);
+
+KX_API void KX_CALL kxCmdBlitImage2(
+    KxCommandBuffer commandBuffer,
+    const void* pBlitImageInfo);
+
+KX_API void KX_CALL kxCmdCopyBufferToImage2(
+    KxCommandBuffer commandBuffer,
+    const void* pCopyBufferToImageInfo);
+
+KX_API void KX_CALL kxCmdCopyImageToBuffer2(
+    KxCommandBuffer commandBuffer,
+    const void* pCopyImageToBufferInfo);
+
+KX_API void KX_CALL kxCmdResolveImage2(
+    KxCommandBuffer commandBuffer,
+    const void* pResolveImageInfo);
+
+/* Extended Dynamic State 3 (VK_EXT_extended_dynamic_state3) */
+KX_API void KX_CALL kxCmdSetDepthClampEnable(
+    KxCommandBuffer commandBuffer,
+    KxBool32 depthClampEnable);
+
+KX_API void KX_CALL kxCmdSetPolygonMode(
+    KxCommandBuffer commandBuffer,
+    KxPolygonMode polygonMode);
+
+KX_API void KX_CALL kxCmdSetRasterizationSamples(
+    KxCommandBuffer commandBuffer,
+    KxSampleCountFlagBits rasterizationSamples);
+
+KX_API void KX_CALL kxCmdSetSampleMask(
+    KxCommandBuffer commandBuffer,
+    KxSampleMask sampleMask);
+
+KX_API void KX_CALL kxCmdSetAlphaToCoverageEnable(
+    KxCommandBuffer commandBuffer,
+    KxBool32 alphaToCoverageEnable);
+
+KX_API void KX_CALL kxCmdSetAlphaToOneEnable(
+    KxCommandBuffer commandBuffer,
+    KxBool32 alphaToOneEnable);
+
+KX_API void KX_CALL kxCmdSetLogicOpEnable(
+    KxCommandBuffer commandBuffer,
+    KxBool32 logicOpEnable);
+
+KX_API void KX_CALL kxCmdSetColorBlendEnable(
+    KxCommandBuffer commandBuffer,
+    uint32_t firstAttachment,
+    uint32_t attachmentCount,
+    const KxBool32* pColorBlendEnables);
+
+KX_API void KX_CALL kxCmdSetColorBlendEquation(
+    KxCommandBuffer commandBuffer,
+    uint32_t firstAttachment,
+    uint32_t attachmentCount,
+    const void* pColorBlendEquations);
+
+KX_API void KX_CALL kxCmdSetColorWriteMask(
+    KxCommandBuffer commandBuffer,
+    uint32_t firstAttachment,
+    uint32_t attachmentCount,
+    const KxColorComponentFlags* pColorWriteMasks);
+
+KX_API void KX_CALL kxCmdSetTessellationDomainOrigin(
+    KxCommandBuffer commandBuffer,
+    KxTessellationDomainOriginKHR domainOrigin);
+
+KX_API void KX_CALL kxCmdSetRasterizationStream(
+    KxCommandBuffer commandBuffer,
+    uint32_t rasterizationStream);
+
+KX_API void KX_CALL kxCmdSetConservativeRasterizationMode(
+    KxCommandBuffer commandBuffer,
+    KxConservativeRasterizationModeEXT conservativeRasterizationMode);
+
+KX_API void KX_CALL kxCmdSetExtraPrimitiveOverestimationSize(
+    KxCommandBuffer commandBuffer,
+    float extraPrimitiveOverestimationSize);
+
+KX_API void KX_CALL kxCmdSetDepthClipEnable(
+    KxCommandBuffer commandBuffer,
+    KxBool32 depthClipEnable);
+
+KX_API void KX_CALL kxCmdSetDepthClipNegativeOneToOne(
+    KxCommandBuffer commandBuffer,
+    KxBool32 negativeOneToOne);
+
+KX_API void KX_CALL kxCmdSetViewportWScalingEnableNV(
+    KxCommandBuffer commandBuffer,
+    KxBool32 viewportWScalingEnable);
+
+KX_API void KX_CALL kxCmdSetViewportSwizzleNV(
+    KxCommandBuffer commandBuffer,
+    uint32_t firstViewport,
+    uint32_t viewportCount,
+    const void* pViewportSwizzles);
+
 /* =======================================================================
  * Utility functions
  * ======================================================================= */

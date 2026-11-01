@@ -113,15 +113,21 @@ KxResult KX_CALL kxCreateFence(
     const KxFenceCreateInfo* pCreateInfo,
     const KxAllocationCallbacks* pAllocator,
     KxFence* pFence) {
-    (void)device; (void)pCreateInfo; (void)pAllocator; (void)pFence;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    kx::Device* dev = kx::find_device_locked(device);
+    if (!dev) return KX_ERROR_INVALID_ARGUMENT;
+    if (!dev->dispatch() || !dev->dispatch()->create_fence)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return dev->dispatch()->create_fence(device, pCreateInfo, pAllocator, pFence);
 }
 
 void KX_CALL kxDestroyFence(
     KxDevice device,
     KxFence fence,
     const KxAllocationCallbacks* pAllocator) {
-    (void)device; (void)fence; (void)pAllocator;
+    kx::Device* dev = kx::find_device_locked(device);
+    if (!dev) return;
+    if (dev->dispatch() && dev->dispatch()->destroy_fence)
+        dev->dispatch()->destroy_fence(device, fence, pAllocator);
 }
 
 KxResult KX_CALL kxWaitForFences(
@@ -130,22 +136,30 @@ KxResult KX_CALL kxWaitForFences(
     const KxFence* pFences,
     KxBool32 waitAll,
     uint64_t timeout) {
-    (void)device; (void)fenceCount; (void)pFences; (void)waitAll;
-    (void)timeout;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    kx::Device* dev = kx::find_device_locked(device);
+    if (!dev) return KX_ERROR_INVALID_ARGUMENT;
+    if (!dev->dispatch() || !dev->dispatch()->wait_for_fences)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return dev->dispatch()->wait_for_fences(device, fenceCount, pFences, waitAll, timeout);
 }
 
 KxResult KX_CALL kxResetFences(
     KxDevice device,
     uint32_t fenceCount,
     const KxFence* pFences) {
-    (void)device; (void)fenceCount; (void)pFences;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    kx::Device* dev = kx::find_device_locked(device);
+    if (!dev) return KX_ERROR_INVALID_ARGUMENT;
+    if (!dev->dispatch() || !dev->dispatch()->reset_fences)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return dev->dispatch()->reset_fences(device, fenceCount, pFences);
 }
 
 KxResult KX_CALL kxGetFenceStatus(KxDevice device, KxFence fence) {
-    (void)device; (void)fence;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    kx::Device* dev = kx::find_device_locked(device);
+    if (!dev) return KX_ERROR_INVALID_ARGUMENT;
+    if (!dev->dispatch() || !dev->dispatch()->get_fence_status)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return dev->dispatch()->get_fence_status(device, fence);
 }
 
 KxResult KX_CALL kxCreateSemaphore(
@@ -153,15 +167,21 @@ KxResult KX_CALL kxCreateSemaphore(
     const KxSemaphoreCreateInfo* pCreateInfo,
     const KxAllocationCallbacks* pAllocator,
     KxSemaphore* pSemaphore) {
-    (void)device; (void)pCreateInfo; (void)pAllocator; (void)pSemaphore;
-    return KX_ERROR_FEATURE_NOT_PRESENT;
+    kx::Device* dev = kx::find_device_locked(device);
+    if (!dev) return KX_ERROR_INVALID_ARGUMENT;
+    if (!dev->dispatch() || !dev->dispatch()->create_semaphore)
+        return KX_ERROR_FEATURE_NOT_PRESENT;
+    return dev->dispatch()->create_semaphore(device, pCreateInfo, pAllocator, pSemaphore);
 }
 
 void KX_CALL kxDestroySemaphore(
     KxDevice device,
     KxSemaphore semaphore,
     const KxAllocationCallbacks* pAllocator) {
-    (void)device; (void)semaphore; (void)pAllocator;
+    kx::Device* dev = kx::find_device_locked(device);
+    if (!dev) return;
+    if (dev->dispatch() && dev->dispatch()->destroy_semaphore)
+        dev->dispatch()->destroy_semaphore(device, semaphore, pAllocator);
 }
 
 /* =======================================================================

@@ -30,6 +30,22 @@ public:
     Expected<std::unique_ptr<IDriverDevice>>
     create_device(PhysicalDevice* physical_device,
                   const KxDeviceCreateInfo* create_info) override;
+
+    KxResult create_win32_surface(Instance* instance,
+                                  const KxWin32SurfaceCreateInfoKHR* create_info,
+                                  const KxAllocationCallbacks* allocator,
+                                  KxSurfaceKHR* surface) override;
+    KxResult create_xcb_surface(Instance* instance,
+                                const KxXcbSurfaceCreateInfoKHR* create_info,
+                                const KxAllocationCallbacks* allocator,
+                                KxSurfaceKHR* surface) override;
+    KxResult create_wayland_surface(Instance* instance,
+                                    const KxWaylandSurfaceCreateInfoKHR* create_info,
+                                    const KxAllocationCallbacks* allocator,
+                                    KxSurfaceKHR* surface) override;
+    void destroy_surface(Instance* instance,
+                         KxSurfaceKHR surface,
+                         const KxAllocationCallbacks* allocator) override;
 };
 
 } /* namespace kx */

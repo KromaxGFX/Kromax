@@ -28,6 +28,10 @@ Instance::Instance(const KxInstanceCreateInfo* create_info,
     dispatch_.destroy_device = nullptr;
     dispatch_.enumerate_physical_devices = nullptr;
     dispatch_.get_proc_addr = nullptr;
+    dispatch_.create_win32_surface = nullptr;
+    dispatch_.create_xcb_surface = nullptr;
+    dispatch_.create_wayland_surface = nullptr;
+    dispatch_.destroy_surface = nullptr;
 }
 
 bool Instance::extension_enabled(const char* name) const noexcept {

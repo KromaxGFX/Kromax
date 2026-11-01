@@ -325,6 +325,16 @@ typedef enum KxSubpassContents {
 /* Special subpass index for external dependencies */
 #define KX_SUBPASS_EXTERNAL (~0u)
 
+/* Dynamic Rendering - Resolve modes */
+typedef enum KxResolveModeFlagBits {
+    KX_RESOLVE_MODE_NONE = 0,
+    KX_RESOLVE_MODE_SAMPLE_ZERO_BIT = 1,
+    KX_RESOLVE_MODE_AVERAGE_BIT = 2,
+    KX_RESOLVE_MODE_MIN_BIT = 3,
+    KX_RESOLVE_MODE_MAX_BIT = 4,
+    KX_RESOLVE_MODE_MAX_ENUM = 0x7FFFFFFF
+} KxResolveModeFlagBits;
+
 typedef enum KxPipelineBindPoint {
     KX_PIPELINE_BIND_POINT_GRAPHICS = 0,
     KX_PIPELINE_BIND_POINT_COMPUTE = 1,
@@ -477,6 +487,10 @@ typedef uint32_t KxDependencyFlags;
 #define KX_DEPENDENCY_DEVICE_GROUP_BIT 0x00000004u
 #define KX_DEPENDENCY_MAX_ENUM 0x7FFFFFFFu
 
+typedef uint32_t KxSubmitFlags;
+#define KX_SUBMIT_NONE 0u
+#define KX_SUBMIT_MAX_ENUM 0x7FFFFFFFu
+
 typedef uint32_t KxColorComponentFlags;
 #define KX_COLOR_COMPONENT_R_BIT 0x00000001u
 #define KX_COLOR_COMPONENT_G_BIT 0x00000002u
@@ -494,6 +508,23 @@ typedef uint32_t KxCommandPoolResetFlags;
 #define KX_COMMAND_POOL_RESET_NONE 0u
 #define KX_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT 0x00000001u
 #define KX_COMMAND_POOL_RESET_MAX_ENUM 0x7FFFFFFFu
+
+/* Extended Dynamic State 3 (VK_EXT_extended_dynamic_state3) */
+typedef uint32_t KxSampleMask;
+#define KX_SAMPLE_MASK_MAX_ENUM 0xFFFFFFFFu
+
+typedef enum KxTessellationDomainOriginKHR {
+    KX_TESSELLATION_DOMAIN_ORIGIN_UPPER_LEFT_KHR = 0,
+    KX_TESSELLATION_DOMAIN_ORIGIN_LOWER_LEFT_KHR = 1,
+    KX_TESSELLATION_DOMAIN_ORIGIN_MAX_ENUM_KHR = 0x7FFFFFFF
+} KxTessellationDomainOriginKHR;
+
+typedef enum KxConservativeRasterizationModeEXT {
+    KX_CONSERVATIVE_RASTERIZATION_MODE_DISABLED_EXT = 0,
+    KX_CONSERVATIVE_RASTERIZATION_MODE_OVERESTIMATE_EXT = 1,
+    KX_CONSERVATIVE_RASTERIZATION_MODE_UNDERESTIMATE_EXT = 2,
+    KX_CONSERVATIVE_RASTERIZATION_MODE_MAX_ENUM_EXT = 0x7FFFFFFF
+} KxConservativeRasterizationModeEXT;
 
 #ifdef __cplusplus
 } /* extern "C" */

@@ -117,6 +117,12 @@ public:
     void free_command_buffers(KxCommandPool, uint32_t, const KxCommandBuffer*) override;
     KxResult begin_command_buffer(KxCommandBuffer, const KxCommandBufferBeginInfo*) override;
     KxResult end_command_buffer(KxCommandBuffer) override;
+    KxResult reset_command_buffer(KxCommandBuffer, KxCommandBufferResetFlags) override;
+
+    void cmd_begin_render_pass(KxCommandBuffer, const KxRenderPassBeginInfo*, KxSubpassContents) override;
+    void cmd_end_render_pass(KxCommandBuffer) override;
+    void cmd_next_subpass(KxCommandBuffer, KxSubpassContents) override;
+
     KxResult queue_submit(uint32_t, const KxSubmitInfo*, KxFence) override;
     KxResult queue_wait_idle() override;
     KxResult device_wait_idle() override;
@@ -153,6 +159,62 @@ public:
     KxResult create_sampler(const KxSamplerCreateInfo*, const KxAllocationCallbacks*, KxSampler*) override;
     void destroy_sampler(KxSampler, const KxAllocationCallbacks*) override;
 
+    /* Fence */
+    KxResult create_fence(const KxFenceCreateInfo*, const KxAllocationCallbacks*, KxFence*) override;
+    void destroy_fence(KxFence, const KxAllocationCallbacks*) override;
+    KxResult wait_for_fences(uint32_t, const KxFence*, KxBool32, uint64_t) override;
+    KxResult reset_fences(uint32_t, const KxFence*) override;
+    KxResult get_fence_status(KxFence) override;
+
+    /* Semaphore */
+    KxResult create_semaphore(const KxSemaphoreCreateInfo*, const KxAllocationCallbacks*, KxSemaphore*) override;
+    void destroy_semaphore(KxSemaphore, const KxAllocationCallbacks*) override;
+
+    /* Swapchain */
+    KxResult create_swapchain(const KxSwapchainCreateInfoKHR*, const KxAllocationCallbacks*, KxSwapchainKHR*) override;
+    void destroy_swapchain(KxSwapchainKHR, const KxAllocationCallbacks*) override;
+    KxResult acquire_next_image(KxSwapchainKHR, uint64_t, KxSemaphore, KxFence, uint32_t*) override;
+    KxResult queue_present(KxQueue, const KxPresentInfoKHR*) override;
+
+    // Dynamic Rendering (VK_KHR_dynamic_rendering)
+    void cmd_begin_rendering(KxCommandBuffer, const KxRenderingInfoKHR*) override;
+    void cmd_end_rendering(KxCommandBuffer) override;
+
+    // Synchronization 2 (VK_KHR_synchronization2)
+    void cmd_pipeline_barrier2(KxCommandBuffer, const KxDependencyInfoKHR*) override;
+    void cmd_write_timestamp2(KxCommandBuffer, KxPipelineStageFlags2KHR, KxQueryPool, uint32_t) override;
+    void cmd_set_event2(KxCommandBuffer, KxEvent, const KxDependencyInfoKHR*) override;
+    void cmd_reset_event2(KxCommandBuffer, KxEvent, KxPipelineStageFlags2KHR) override;
+    void cmd_wait_events2(KxCommandBuffer, uint32_t, const KxEvent*, const KxDependencyInfoKHR*) override;
+
+    // Copy Commands v2 (VK_KHR_copy_commands2)
+    void cmd_copy_buffer2(KxCommandBuffer, const void*) override;
+    void cmd_copy_image2(KxCommandBuffer, const void*) override;
+    void cmd_blit_image2(KxCommandBuffer, const void*) override;
+    void cmd_copy_buffer_to_image2(KxCommandBuffer, const void*) override;
+    void cmd_copy_image_to_buffer2(KxCommandBuffer, const void*) override;
+    void cmd_resolve_image2(KxCommandBuffer, const void*) override;
+
+    // Extended Dynamic State 3 (VK_EXT_extended_dynamic_state3)
+    void cmd_set_depth_clamp_enable(KxCommandBuffer, KxBool32) override;
+    void cmd_set_polygon_mode(KxCommandBuffer, KxPolygonMode) override;
+    void cmd_set_rasterization_samples(KxCommandBuffer, KxSampleCountFlagBits) override;
+    void cmd_set_sample_mask(KxCommandBuffer, KxSampleMask) override;
+    void cmd_set_alpha_to_coverage_enable(KxCommandBuffer, KxBool32) override;
+    void cmd_set_alpha_to_one_enable(KxCommandBuffer, KxBool32) override;
+    void cmd_set_logic_op_enable(KxCommandBuffer, KxBool32) override;
+    void cmd_set_color_blend_enable(KxCommandBuffer, uint32_t, uint32_t, const KxBool32*) override;
+    void cmd_set_color_blend_equation(KxCommandBuffer, uint32_t, uint32_t, const void*) override;
+    void cmd_set_color_write_mask(KxCommandBuffer, uint32_t, uint32_t, const KxColorComponentFlags*) override;
+    void cmd_set_tessellation_domain_origin(KxCommandBuffer, KxTessellationDomainOriginKHR) override;
+    void cmd_set_rasterization_stream(KxCommandBuffer, uint32_t) override;
+    void cmd_set_conservative_rasterization_mode(KxCommandBuffer, KxConservativeRasterizationModeEXT) override;
+    void cmd_set_extra_primitive_overestimation_size(KxCommandBuffer, float) override;
+    void cmd_set_depth_clip_enable(KxCommandBuffer, KxBool32) override;
+    void cmd_set_depth_clip_negative_one_to_one(KxCommandBuffer, KxBool32) override;
+    void cmd_set_viewport_w_scaling_enable_nv(KxCommandBuffer, KxBool32) override;
+    void cmd_set_viewport_swizzle_nv(KxCommandBuffer, uint32_t, uint32_t, const void*) override;
+
 private:
     PhysicalDevice* physical_device_;
 
@@ -167,6 +229,46 @@ private:
     void execute_draw_indexed(const CmdDrawIndexed& cmd);
     void execute_bind_descriptor_sets(const CmdBindDescriptorSets& cmd);
     void execute_dispatch(const CmdDispatch& cmd);
+
+    // Dynamic Rendering (VK_KHR_dynamic_rendering)
+    void execute_begin_rendering(const CmdBeginRendering& cmd);
+    void execute_end_rendering(const CmdEndRendering& cmd);
+
+    // Synchronization 2 (VK_KHR_synchronization2)
+    void execute_pipeline_barrier2(const CmdPipelineBarrier2& cmd);
+    void execute_write_timestamp2(const CmdWriteTimestamp2& cmd);
+    void execute_set_event2(const CmdSetEvent2& cmd);
+    void execute_reset_event2(const CmdResetEvent2& cmd);
+    void execute_wait_events2(const CmdWaitEvents2& cmd);
+
+    // Copy Commands v2 (VK_KHR_copy_commands2)
+    void execute_copy_buffer2(const CmdCopyBuffer2& cmd);
+    void execute_copy_image2(const CmdCopyImage2& cmd);
+    void execute_blit_image2(const CmdBlitImage2& cmd);
+    void execute_copy_buffer_to_image2(const CmdCopyBufferToImage2& cmd);
+    void execute_copy_image_to_buffer2(const CmdCopyImageToBuffer2& cmd);
+    void execute_resolve_image2(const CmdResolveImage2& cmd);
+
+    // Extended Dynamic State 3 (VK_EXT_extended_dynamic_state3)
+    void execute_set_depth_clamp_enable(const CmdSetDepthClampEnable& cmd);
+    void execute_set_polygon_mode(const CmdSetPolygonMode& cmd);
+    void execute_set_rasterization_samples(const CmdSetRasterizationSamples& cmd);
+    void execute_set_sample_mask(const CmdSetSampleMask& cmd);
+    void execute_set_alpha_to_coverage_enable(const CmdSetAlphaToCoverageEnable& cmd);
+    void execute_set_alpha_to_one_enable(const CmdSetAlphaToOneEnable& cmd);
+    void execute_set_logic_op_enable(const CmdSetLogicOpEnable& cmd);
+    void execute_set_color_blend_enable(const CmdSetColorBlendEnable& cmd);
+    void execute_set_color_blend_equation(const CmdSetColorBlendEquation& cmd);
+    void execute_set_color_write_mask(const CmdSetColorWriteMask& cmd);
+    void execute_set_tessellation_domain_origin(const CmdSetTessellationDomainOrigin& cmd);
+    void execute_set_rasterization_stream(const CmdSetRasterizationStream& cmd);
+    void execute_set_conservative_rasterization_mode(const CmdSetConservativeRasterizationMode& cmd);
+    void execute_set_extra_primitive_overestimation_size(const CmdSetExtraPrimitiveOverestimationSize& cmd);
+    void execute_set_depth_clip_enable(const CmdSetDepthClipEnable& cmd);
+    void execute_set_depth_clip_negative_one_to_one(const CmdSetDepthClipNegativeOneToOne& cmd);
+    void execute_set_viewport_w_scaling_enable_nv(const CmdSetViewportWScalingEnableNV& cmd);
+    void execute_set_viewport_swizzle_nv(const CmdSetViewportSwizzleNV& cmd);
+
     static uint32_t format_pixel_size(KxFormat format);
 
     // Current pipeline state for draw commands

@@ -103,13 +103,106 @@ public:
                               uint32_t count,
                               const KxCommandBuffer* command_buffers) override;
 
-    KxResult begin_command_buffer(KxCommandBuffer command_buffer,
-                                  const KxCommandBufferBeginInfo* begin_info) override;
-    KxResult end_command_buffer(KxCommandBuffer command_buffer) override;
-
     KxResult queue_submit(uint32_t submit_count,
                           const KxSubmitInfo* submits,
                           KxFence fence) override;
+
+    // Command buffer recording
+    KxResult begin_command_buffer(KxCommandBuffer command_buffer,
+                                  const KxCommandBufferBeginInfo* begin_info) override;
+    KxResult end_command_buffer(KxCommandBuffer command_buffer) override;
+    KxResult reset_command_buffer(KxCommandBuffer command_buffer,
+                                  KxCommandBufferResetFlags flags) override;
+
+    void cmd_begin_render_pass(KxCommandBuffer command_buffer,
+                               const KxRenderPassBeginInfo* render_pass_begin,
+                               KxSubpassContents contents) override;
+    void cmd_end_render_pass(KxCommandBuffer command_buffer) override;
+    void cmd_next_subpass(KxCommandBuffer command_buffer,
+                          KxSubpassContents contents) override;
+
+    // Dynamic Rendering (VK_KHR_dynamic_rendering)
+    void cmd_begin_rendering(KxCommandBuffer command_buffer,
+                             const KxRenderingInfoKHR* rendering_info) override;
+    void cmd_end_rendering(KxCommandBuffer command_buffer) override;
+
+    // Synchronization 2 (VK_KHR_synchronization2)
+    void cmd_pipeline_barrier2(KxCommandBuffer command_buffer,
+                               const KxDependencyInfoKHR* dependency_info) override;
+    void cmd_write_timestamp2(KxCommandBuffer command_buffer,
+                              KxPipelineStageFlags2KHR stage,
+                              KxQueryPool query_pool,
+                              uint32_t query) override;
+    void cmd_set_event2(KxCommandBuffer command_buffer,
+                        KxEvent event,
+                        const KxDependencyInfoKHR* dependency_info) override;
+    void cmd_reset_event2(KxCommandBuffer command_buffer,
+                          KxEvent event,
+                          KxPipelineStageFlags2KHR stage_mask) override;
+    void cmd_wait_events2(KxCommandBuffer command_buffer,
+                          uint32_t event_count,
+                          const KxEvent* events,
+                          const KxDependencyInfoKHR* dependency_infos) override;
+
+    // Copy Commands v2 (VK_KHR_copy_commands2)
+    void cmd_copy_buffer2(KxCommandBuffer command_buffer,
+                          const void* copy_buffer_info) override;
+    void cmd_copy_image2(KxCommandBuffer command_buffer,
+                         const void* copy_image_info) override;
+    void cmd_blit_image2(KxCommandBuffer command_buffer,
+                         const void* blit_image_info) override;
+    void cmd_copy_buffer_to_image2(KxCommandBuffer command_buffer,
+                                   const void* copy_buffer_to_image_info) override;
+    void cmd_copy_image_to_buffer2(KxCommandBuffer command_buffer,
+                                   const void* copy_image_to_buffer_info) override;
+    void cmd_resolve_image2(KxCommandBuffer command_buffer,
+                            const void* resolve_image_info) override;
+
+    // Extended Dynamic State 3 (VK_EXT_extended_dynamic_state3)
+    void cmd_set_depth_clamp_enable(KxCommandBuffer command_buffer,
+                                    KxBool32 depth_clamp_enable) override;
+    void cmd_set_polygon_mode(KxCommandBuffer command_buffer,
+                              KxPolygonMode polygon_mode) override;
+    void cmd_set_rasterization_samples(KxCommandBuffer command_buffer,
+                                       KxSampleCountFlagBits rasterization_samples) override;
+    void cmd_set_sample_mask(KxCommandBuffer command_buffer,
+                             KxSampleMask sample_mask) override;
+    void cmd_set_alpha_to_coverage_enable(KxCommandBuffer command_buffer,
+                                          KxBool32 alpha_to_coverage_enable) override;
+    void cmd_set_alpha_to_one_enable(KxCommandBuffer command_buffer,
+                                     KxBool32 alpha_to_one_enable) override;
+    void cmd_set_logic_op_enable(KxCommandBuffer command_buffer,
+                                 KxBool32 logic_op_enable) override;
+    void cmd_set_color_blend_enable(KxCommandBuffer command_buffer,
+                                    uint32_t first_attachment,
+                                    uint32_t attachment_count,
+                                    const KxBool32* color_blend_enables) override;
+    void cmd_set_color_blend_equation(KxCommandBuffer command_buffer,
+                                      uint32_t first_attachment,
+                                      uint32_t attachment_count,
+                                      const void* color_blend_equations) override;
+    void cmd_set_color_write_mask(KxCommandBuffer command_buffer,
+                                  uint32_t first_attachment,
+                                  uint32_t attachment_count,
+                                  const KxColorComponentFlags* color_write_masks) override;
+    void cmd_set_tessellation_domain_origin(KxCommandBuffer command_buffer,
+                                            KxTessellationDomainOriginKHR domain_origin) override;
+    void cmd_set_rasterization_stream(KxCommandBuffer command_buffer,
+                                      uint32_t rasterization_stream) override;
+    void cmd_set_conservative_rasterization_mode(KxCommandBuffer command_buffer,
+                                                 KxConservativeRasterizationModeEXT conservative_rasterization_mode) override;
+    void cmd_set_extra_primitive_overestimation_size(KxCommandBuffer command_buffer,
+                                                     float extra_primitive_overestimation_size) override;
+    void cmd_set_depth_clip_enable(KxCommandBuffer command_buffer,
+                                   KxBool32 depth_clip_enable) override;
+    void cmd_set_depth_clip_negative_one_to_one(KxCommandBuffer command_buffer,
+                                                KxBool32 negative_one_to_one) override;
+    void cmd_set_viewport_w_scaling_enable_nv(KxCommandBuffer command_buffer,
+                                              KxBool32 viewport_w_scaling_enable) override;
+    void cmd_set_viewport_swizzle_nv(KxCommandBuffer command_buffer,
+                                     uint32_t first_viewport,
+                                     uint32_t viewport_count,
+                                     const void* viewport_swizzles) override;
 
     KxResult queue_wait_idle() override;
     KxResult device_wait_idle() override;
@@ -181,6 +274,41 @@ public:
     void destroy_sampler(KxSampler sampler,
                          const KxAllocationCallbacks* allocator) override;
 
+    // Fence
+    KxResult create_fence(const KxFenceCreateInfo* create_info,
+                          const KxAllocationCallbacks* allocator,
+                          KxFence* fence) override;
+    void destroy_fence(KxFence fence,
+                       const KxAllocationCallbacks* allocator) override;
+    KxResult wait_for_fences(uint32_t fence_count,
+                             const KxFence* fences,
+                             KxBool32 wait_all,
+                             uint64_t timeout) override;
+    KxResult reset_fences(uint32_t fence_count,
+                          const KxFence* fences) override;
+    KxResult get_fence_status(KxFence fence) override;
+
+    // Semaphore
+    KxResult create_semaphore(const KxSemaphoreCreateInfo* create_info,
+                              const KxAllocationCallbacks* allocator,
+                              KxSemaphore* semaphore) override;
+    void destroy_semaphore(KxSemaphore semaphore,
+                           const KxAllocationCallbacks* allocator) override;
+
+    // Swapchain
+    KxResult create_swapchain(const KxSwapchainCreateInfoKHR* create_info,
+                              const KxAllocationCallbacks* allocator,
+                              KxSwapchainKHR* swapchain) override;
+    void destroy_swapchain(KxSwapchainKHR swapchain,
+                           const KxAllocationCallbacks* allocator) override;
+    KxResult acquire_next_image(KxSwapchainKHR swapchain,
+                                uint64_t timeout,
+                                KxSemaphore semaphore,
+                                KxFence fence,
+                                uint32_t* image_index) override;
+    KxResult queue_present(KxQueue queue,
+                           const KxPresentInfoKHR* present_info) override;
+
     // Object lookup (returns Software* types for compatibility, will return nullptr for Vulkan)
     SoftwareBuffer* find_buffer(KxBuffer buffer) override { return nullptr; }
     SoftwareImage* find_image(KxImage image) override { return nullptr; }
@@ -220,6 +348,7 @@ public:
     KxDeviceMemory register_memory(std::unique_ptr<VkMemoryImpl> memory);
     KxFence register_fence(std::unique_ptr<VkFenceImpl> fence);
     KxSemaphore register_semaphore(std::unique_ptr<VkSemaphoreImpl> semaphore);
+    KxSwapchainKHR register_swapchain(std::unique_ptr<VkSwapchainImpl> swapchain);
     KxQueue register_queue(std::unique_ptr<VkQueueImpl> queue);
 
     // Object finders for Vulkan objects
@@ -240,6 +369,7 @@ public:
     VkMemoryImpl* find_vk_memory(KxDeviceMemory memory);
     VkFenceImpl* find_vk_fence(KxFence fence);
     VkSemaphoreImpl* find_vk_semaphore(KxSemaphore semaphore);
+    VkSwapchainImpl* find_vk_swapchain(KxSwapchainKHR swapchain);
     VkQueueImpl* find_vk_queue(KxQueue queue);
 
     void unregister_shader_module(KxShaderModule module);
@@ -259,6 +389,7 @@ public:
     void unregister_memory(KxDeviceMemory memory);
     void unregister_fence(KxFence fence);
     void unregister_semaphore(KxSemaphore semaphore);
+    void unregister_swapchain(KxSwapchainKHR swapchain);
     void unregister_queue(KxQueue queue);
 
 private:
@@ -282,6 +413,7 @@ private:
     std::unordered_map<uint64_t, std::unique_ptr<VkMemoryImpl>> memories_;
     std::unordered_map<uint64_t, std::unique_ptr<VkFenceImpl>> fences_;
     std::unordered_map<uint64_t, std::unique_ptr<VkSemaphoreImpl>> semaphores_;
+    std::unordered_map<uint64_t, std::unique_ptr<VkSwapchainImpl>> swapchains_;
     std::unordered_map<uint64_t, std::unique_ptr<VkQueueImpl>> queues_;
 
     uint64_t next_handle_ = 1;
