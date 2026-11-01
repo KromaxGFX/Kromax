@@ -167,6 +167,17 @@ add_library(kromax
     src/layers/ValidationLayer.cpp
 
     src/platform/Platform.h
+
+    src/runtime/IRuntime.h
+    src/runtime/IDevice.h
+    src/runtime/ICommandBuffer.h
+    src/runtime/IShaderModule.h
+    src/runtime/IPipeline.h
+    src/runtime/IDescriptorSet.h
+    src/runtime/ISwapchain.h
+    src/runtime/ISemaphore.h
+    src/runtime/IBackend.h
+    src/runtime/BackendRegistry.h
 )
 
 # Platform-specific sources
@@ -187,6 +198,7 @@ target_include_directories(kromax PRIVATE
     src/display/offscreen
     src/display/kms
     src/layers
+    src/runtime
     include/kromax
 )
 
