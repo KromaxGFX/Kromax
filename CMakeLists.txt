@@ -52,6 +52,7 @@ add_library(kromax
     include/kromax/kromax.h
     include/kromax/kx_swapchain.h
     include/kromax/kx_thread_pool.h
+    include/kromax/kx_pipeline_cache.h
 
     src/core/Expected.h
     src/core/Allocator.h

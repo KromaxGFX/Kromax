@@ -235,16 +235,7 @@ KX_API void KX_CALL kxDestroyPipeline(
     KxPipeline pipeline,
     const KxAllocationCallbacks* pAllocator);
 
-KX_API KxResult KX_CALL kxCreatePipelineCache(
-    KxDevice device,
-    const void* pCreateInfo,
-    const KxAllocationCallbacks* pAllocator,
-    KxPipelineCache* pPipelineCache);
-
-KX_API void KX_CALL kxDestroyPipelineCache(
-    KxDevice device,
-    KxPipelineCache pipelineCache,
-    const KxAllocationCallbacks* pAllocator);
+/* Pipeline Cache functions are declared in kx_pipeline_cache.h */
 
 /* =======================================================================
  * Descriptor Set Layout functions
