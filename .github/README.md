@@ -103,23 +103,6 @@ Las labels definidas en `settings/labels.yml` se sincronizan vía GitHub Actions
 
 ---
 
-## 🔗 Repositorios de la organización
-
-| Repo | Descripción |
-|------|-------------|
-| [KromaxCore](https://github.com/KromaxGFX/KromaxCore) | Núcleo: contrato, loader, conformidad |
-| [KromaxVulkan](https://github.com/KromaxGFX/KromaxVulkan) | Backend Vulkan 1.3+ |
-| [KromaxMetal](https://github.com/KromaxGFX/KromaxMetal) | Backend Metal 3+ |
-| [KromaxDX12](https://github.com/KromaxGFX/KromaxDX12) | Backend DirectX 12 |
-| [KromaxWebGPU](https://github.com/KromaxGFX/KromaxWebGPU) | Backend WebGPU |
-| [KromaxOpenGL](https://github.com/KromaxGFX/KromaxOpenGL) | Backend OpenGL 4.6/ES 3.2 |
-| [KromaxCLI](https://github.com/KromaxGFX/KromaxCLI) | CLI: init, backend, shader, conformance |
-| [KromaxShaderC](https://github.com/KromaxGFX/KromaxShaderC) | Compilador .kromax → SPIR-V/DXIL/Metal/WGSL |
-| [KromaxConformance](https://github.com/KromaxGFX/KromaxConformance) | Suite de tests de conformidad |
-| [WebSite](https://github.com/KromaxGFX/WebSite) | Sitio web y documentación (Astro) |
-
----
-
 ## 📄 Licencia
 
 Todo el contenido de este repositorio está bajo **licencia Apache 2.0**, salvo que se indique lo contrario.
